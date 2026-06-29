@@ -65,3 +65,6 @@ __pycache__/
 *.njsproj
 *.sln
 *.sw?
+
+**/*[Cc]laude_export*.html
+Explainable*.pdf
