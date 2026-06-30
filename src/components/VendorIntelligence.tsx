@@ -83,33 +83,35 @@ export default function VendorIntelligence() {
             <strong>{summary.totalExposure}</strong>
           </div>
         </div>
-        {vendors.map((v) => (
-          <button
-            key={v.id}
-            className={`vendor-row ${selected.id === v.id ? "active" : ""}`}
-            onClick={() => setSelected(v)}
-          >
-            <span className="vendor-name">
-              <span className="vendor-logo">{v.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}</span>
-              <span className="vendor-name-copy">
-                <strong>{v.name}</strong>
-                <small>{v.category}</small>
+        <div className="vendor-list-scroll">
+          {vendors.map((v) => (
+            <button
+              key={v.id}
+              className={`vendor-row ${selected.id === v.id ? "active" : ""}`}
+              onClick={() => setSelected(v)}
+            >
+              <span className="vendor-name">
+                <span className="vendor-logo">{v.name.split(" ").map((w) => w[0]).slice(0, 2).join("")}</span>
+                <span className="vendor-name-copy">
+                  <strong>{v.name}</strong>
+                  <small>{v.category}</small>
+                </span>
               </span>
-            </span>
-            <span className="vendor-stat-block">
-              <small>Risk</small>
-              <span className={`risk-number ${v.risk >= 75 ? "critical" : v.risk >= 50 ? "elevated" : "low"}`}>{v.risk}</span>
-            </span>
-            <span className="vendor-stat-block">
-              <small>On time</small>
-              <strong>{v.onTime}%</strong>
-            </span>
-            <span className="vendor-stat-block">
-              <small>Exposure</small>
-              <strong>{v.exposure}</strong>
-            </span>
-          </button>
-        ))}
+              <span className="vendor-stat-block">
+                <small>Risk</small>
+                <span className={`risk-number ${v.risk >= 75 ? "critical" : v.risk >= 50 ? "elevated" : "low"}`}>{v.risk}</span>
+              </span>
+              <span className="vendor-stat-block">
+                <small>On time</small>
+                <strong>{v.onTime}%</strong>
+              </span>
+              <span className="vendor-stat-block">
+                <small>Exposure</small>
+                <strong>{v.exposure}</strong>
+              </span>
+            </button>
+          ))}
+        </div>
       </section>
 
       <section className="panel vendor-profile">
