@@ -68,3 +68,9 @@ __pycache__/
 
 **/*[Cc]laude_export*.html
 Explainable*.pdf
+
+
+graphify-out/
+.graphify*/
+
+graphify-out/
