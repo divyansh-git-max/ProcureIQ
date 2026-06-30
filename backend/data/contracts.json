@@ -1,0 +1,40 @@
+[
+  {
+    "id": "CTR-2025-012",
+    "vendor_id": "VEN-0042",
+    "title": "Master Steel Supply Agreement",
+    "clauses": [
+      {
+        "ref": "\u00a74.2",
+        "text": "Unit pricing for structural steel is fixed at \u20b967,000/tonne for the duration of Q1 2026."
+      }
+    ],
+    "effective_date": "2026-01-01"
+  },
+  {
+    "id": "CTR-2025-045",
+    "vendor_id": "VEN-0107",
+    "title": "Concrete Supply Framework",
+    "clauses": [
+      {
+        "ref": "\u00a72.1",
+        "text": "ReadyMix concrete supply at standard market rates."
+      }
+    ],
+    "effective_date": "2026-01-15"
+  },
+  {
+    "id": "CTR-2025-094",
+    "vendor_id": "VEN-0033",
+    "title": "MEP Electricals Contract",
+    "clauses": [
+      {
+        "ref": "\u00a78.7",
+        "text": "Liquidated damages: A 0.5% weekly penalty applies for deliveries received after the agreed deadline.",
+        "penalty_pct": 0.5,
+        "delivery_days": 30
+      }
+    ],
+    "effective_date": "2026-02-01"
+  }
+]

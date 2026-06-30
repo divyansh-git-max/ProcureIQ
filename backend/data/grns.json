@@ -1,0 +1,47 @@
+[
+  {
+    "id": "GRN-33201",
+    "po_id": "PO-88421",
+    "vendor_id": "VEN-0042",
+    "received_date": "2026-03-16",
+    "items": [
+      {
+        "sku": "STL-500",
+        "description": "TMT Bars 500D",
+        "qty": 150,
+        "unit_price": 67000.0,
+        "total": 10050000.0
+      }
+    ]
+  },
+  {
+    "id": "GRN-33205",
+    "po_id": "PO-88430",
+    "vendor_id": "VEN-0107",
+    "received_date": "2026-03-21",
+    "items": [
+      {
+        "sku": "RMC-M30",
+        "description": "ReadyMix Concrete M30",
+        "qty": 200,
+        "unit_price": 3600.0,
+        "total": 720000.0
+      }
+    ]
+  },
+  {
+    "id": "GRN-33219",
+    "po_id": "PO-88450",
+    "vendor_id": "VEN-0033",
+    "received_date": "2026-04-21",
+    "items": [
+      {
+        "sku": "CBL-25",
+        "description": "25mm Copper Cable (Roll)",
+        "qty": 100,
+        "unit_price": 2400.0,
+        "total": 240000.0
+      }
+    ]
+  }
+]
