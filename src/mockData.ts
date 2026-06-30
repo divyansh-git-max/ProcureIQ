@@ -213,6 +213,30 @@ export const pipelineSteps = [
   { id: "analysis", label: "Agent analysis", metric: "12 findings", state: "idle" },
 ];
 
+export const workspaces = [
+  {
+    id: "arcline-infra",
+    name: "Arcline Infra",
+    project: "Metro Phase IV",
+    initials: "AR",
+    description: "Construction procurement tenant",
+  },
+  {
+    id: "harbor-builders",
+    name: "Harbor Builders",
+    project: "Coastal Logistics Hub",
+    initials: "HB",
+    description: "Tender and vendor operations",
+  },
+  {
+    id: "summit-works",
+    name: "Summit Works",
+    project: "Central Plant Expansion",
+    initials: "SW",
+    description: "High-volume procurement watchlist",
+  },
+];
+
 // Operations layer: SLOs, latency, cost, Ragas (Layer 1), trajectory eval (Layer 3) — see eval discussion
 export const slos = [
   { label: "API availability", value: "99.96%", target: "≥ 99.9%" },
