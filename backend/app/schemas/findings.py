@@ -1,9 +1,9 @@
-from enum import StrEnum
+from enum import Enum
 
 from pydantic import BaseModel, Field
 
 
-class FindingStatus(StrEnum):
+class FindingStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     DISMISSED = "dismissed"
