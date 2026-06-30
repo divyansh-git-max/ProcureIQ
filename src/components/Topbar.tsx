@@ -3,7 +3,7 @@ import { useApp, type PageId, type RoleName } from "../context/AppContext";
 import { ROLES } from "../mockData";
 
 export default function Topbar() {
-  const { role, setRole, page } = useApp();
+  const { role, setRole, page, workspace } = useApp();
   const [open, setOpen] = useState(false);
 
   const titles: Record<PageId, [string, string]> = {
@@ -21,17 +21,22 @@ export default function Topbar() {
       <div className="page-heading">
         <span className="eyebrow">{eyebrow}</span>
         <h1>{title}</h1>
+        <div className="workspace-chip">
+          <span>{workspace.name}</span>
+          <small>{workspace.project}</small>
+        </div>
       </div>
 
       <div className="role-control">
-        <button onClick={() => setOpen(!open)}>
-          {role} view
+        <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {role} view · {ROLES[role].description}
         </button>
         {open && (
           <div className="role-menu">
             {roleEntries.map(([name, info]) => (
               <button
                 key={name}
+                type="button"
                 onClick={() => {
                   setRole(name);
                   setOpen(false);
