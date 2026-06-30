@@ -55,6 +55,7 @@ type AppContextValue = {
   approveUser: (id: string) => void;
   rejectUser: (id: string) => void;
   submitSignupRequest: (name: string, email: string, role: RoleName, workspaceId: WorkspaceId) => string | null;
+  setWorkspaceId: (id: WorkspaceId) => void;
 };
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
@@ -65,7 +66,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin]         = useState(() => sessionStorage.getItem("isAdmin") === "true");
   const [currentUser, setCurrentUser] = useState<PendingUser | null>(() => {
     const saved = sessionStorage.getItem("currentUser");
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return null;
+    }
   });
   const [users, setUsers]             = useState<PendingUser[]>(SEED_USERS);
 
@@ -124,6 +130,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUsers((prev) => prev.map((u) => u.id === id ? { ...u, status: "rejected" } : u));
   }
 
+  function setWorkspaceId(id: WorkspaceId) {
+    if (currentUser) {
+      setCurrentUser({ ...currentUser, workspaceId: id });
+    }
+  }
+
   const workspace =
     workspaces.find((w) => w.id === (currentUser?.workspaceId ?? workspaces[0].id)) ?? workspaces[0];
 
@@ -132,7 +144,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isAuthenticated, authMode, setAuthMode, signIn, signOut,
       page, setPage, role, roleInfo: ROLES[role], workspace,
       currentUser, isAdmin, pendingUsers: users,
-      approveUser, rejectUser, submitSignupRequest,
+      approveUser, rejectUser, submitSignupRequest, setWorkspaceId
     }}>
       {children}
     </AppContext.Provider>
