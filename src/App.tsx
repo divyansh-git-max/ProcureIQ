@@ -8,7 +8,7 @@ import DocumentControl from "./components/DocumentControl";
 import Operations from "./components/Operations";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import type { AuthMode, PageId, RoleName, WorkspaceId } from "./context/AppContext";
+import type { PageId, RoleName, WorkspaceId } from "./context/AppContext";
 import { ROLES, workspaces } from "./mockData";
 
 // ─── Role badge colours ───────────────────────────────────────────────────────
@@ -392,7 +392,7 @@ function Shell() {
   if (isAdmin) return <AdminDashboard />;
 
   // Regular user view
-  const pageContent: Record<PageId, JSX.Element> = {
+  const pageContent: Record<PageId, React.ReactNode> = {
     overview:   <CommandCenter />,
     review:     <ReviewQueue />,
     vendors:    <VendorIntelligence />,

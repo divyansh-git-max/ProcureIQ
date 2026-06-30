@@ -515,27 +515,32 @@ a:focus-visible {
 }
 
 .vendor-layout {
-  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-  grid-template-rows: auto auto;
+  grid-template-columns: minmax(360px, 0.95fr) minmax(420px, 1.05fr);
+  grid-template-areas:
+    "alert alert"
+    "watchlist profile"
+    "forecast forecast";
   align-items: stretch;
 }
 
 .vendor-list-panel {
+  grid-area: watchlist;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  align-self: start;
-  position: sticky;
-  top: 104px;
+}
+
+.vendor-profile {
+  grid-area: profile;
 }
 
 .vendor-list-scroll {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: calc(100vh - 280px);
+  max-height: clamp(300px, 42vh, 460px);
   overflow-y: auto;
-  padding-right: 4px;
+  padding-right: 2px;
 }
 
 .vendor-profile-inner {
@@ -546,7 +551,7 @@ a:focus-visible {
 
 .vendor-metrics {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
   gap: 12px;
 }
 
@@ -583,7 +588,7 @@ a:focus-visible {
 
 .vendor-summary-strip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
   gap: 10px;
 }
 
@@ -616,6 +621,13 @@ a:focus-visible {
   min-width: 0;
 }
 
+.vendor-name-copy strong,
+.vendor-name-copy small,
+.vendor-profile-head h2,
+.vendor-profile-head p {
+  overflow-wrap: anywhere;
+}
+
 .metric-up {
   color: #86efac !important;
 }
@@ -631,6 +643,10 @@ a:focus-visible {
 .span-2,
 .span-full {
   grid-column: 1 / -1;
+}
+
+.vendor-layout .span-full {
+  grid-area: forecast;
 }
 
 .panel,
@@ -1067,7 +1083,7 @@ a:focus-visible {
 
 .vendor-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) 0.65fr 0.55fr 0.7fr;
+  grid-template-columns: minmax(0, 1.45fr) minmax(74px, 0.6fr) minmax(82px, 0.55fr) minmax(92px, 0.7fr);
   gap: 12px;
   align-items: center;
   padding: 12px 0;
@@ -1085,7 +1101,7 @@ a:focus-visible {
 }
 
 .vendor-row + .vendor-row {
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .vendor-row.active {
@@ -1099,6 +1115,7 @@ a:focus-visible {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
+  min-width: 0;
 }
 
 .vendor-stat-block strong {
@@ -1196,6 +1213,10 @@ a:focus-visible {
   padding: 18px 0;
 }
 
+.risk-score-hero > div:last-child {
+  min-width: 0;
+}
+
 .score-ring {
   --score: 50;
   width: 108px;
@@ -1257,6 +1278,8 @@ a:focus-visible {
   background: transparent;
   padding: 0;
   color: #c4b5fd;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
 .risk-parts > div > div:first-child {
@@ -1276,6 +1299,10 @@ a:focus-visible {
   grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
   gap: 18px;
   align-items: center;
+}
+
+.forecast-content > * {
+  min-width: 0;
 }
 
 .forecast-copy strong {
@@ -1550,7 +1577,7 @@ a:focus-visible {
 }
 
 .vendor-alert {
-  grid-column: 1 / -1;
+  grid-area: alert;
   border-color: rgba(125, 211, 252, 0.24);
   color: #dbeafe;
   background: linear-gradient(145deg, rgba(14, 23, 41, 0.95), rgba(11, 19, 33, 0.9));
@@ -1564,18 +1591,20 @@ a:focus-visible {
   .review-layout,
   .vendor-layout {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      "alert"
+      "profile"
+      "watchlist"
+      "forecast";
   }
 
-  .vendor-list-panel {
-    position: static;
+  .vendor-list-scroll {
+    max-height: none;
+    overflow: visible;
   }
 
   .vendor-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .vendor-summary-strip {
-    grid-template-columns: 1fr;
   }
 
   .quality-grid {
@@ -1608,9 +1637,12 @@ a:focus-visible {
   .forecast-content,
   .pipeline-strip,
   .trace-row,
-  .document-row,
-  .vendor-row {
+  .document-row {
     grid-template-columns: 1fr;
+  }
+
+  .vendor-row {
+    grid-template-columns: minmax(0, 1fr) repeat(3, minmax(82px, auto));
   }
 
   .vendor-metrics {
@@ -1734,6 +1766,22 @@ a:focus-visible {
 
   .vendor-row {
     gap: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  .vendor-summary-strip,
+  .vendor-metrics,
+  .vendor-row {
+    grid-template-columns: 1fr;
+  }
+
+  .vendor-stat-block {
+    width: 100%;
+  }
+
+  .risk-formula code {
+    text-align: left;
   }
 }
 
