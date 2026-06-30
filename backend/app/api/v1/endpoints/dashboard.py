@@ -1,15 +1,21 @@
 from fastapi import APIRouter
 
+from app.core.seed_data import KPIS, SEVERITY_MIX, WEEKLY_RISK
 from app.schemas.dashboard import SummaryResponse
 
 router = APIRouter()
 
 
-@router.get("/summary", response_model=SummaryResponse)
+@router.get("/summary", response_model=SummaryResponse, response_model_by_alias=True)
 async def get_summary() -> SummaryResponse:
-    """Return command-center KPIs and chart data.
+    """Return command-center KPIs, weekly risk chart data, and severity mix.
 
-    TODO: replace seed response with aggregates from findings, vendors, and purchase orders.
+    Data source: app/core/seed_data.py
+    Consumed by: CommandCenter.tsx → fetchSummary()
     """
-    return SummaryResponse(kpis=[], weekly_risk=[], severity_mix=[])
+    return SummaryResponse(
+        kpis=KPIS,
+        weekly_risk=WEEKLY_RISK,
+        severity_mix=SEVERITY_MIX,
+    )
 
