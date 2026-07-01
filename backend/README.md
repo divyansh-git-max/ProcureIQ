@@ -26,12 +26,20 @@ This backend is intentionally thin right now. It defines the architecture, API b
 
 ## Local Development
 
+Using `uv` (recommended):
+```bash
+cd backend
+uv sync
+uv run run.py
+```
+
+Using standard python venv:
 ```bash
 cd backend
 python -m venv .venv
 .venv\Scripts\activate
-pip install -e ".[dev]"
-uvicorn app.main:app --reload
+pip install -r requirements.txt
+python run.py
 ```
 
 The frontend mock client is shaped around these future routes:
