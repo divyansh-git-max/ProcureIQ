@@ -1,8 +1,19 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import settings
+from app.db.bootstrap import bootstrap_db
+from app.db.session import close_db_pool
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    await bootstrap_db()
+    yield
+    await close_db_pool()
 
 
 def create_app() -> FastAPI:
@@ -10,6 +21,7 @@ def create_app() -> FastAPI:
         title=settings.app_name,
         version="0.1.0",
         description="Procurement intelligence API for document ingestion, agent findings, and operations telemetry.",
+        lifespan=lifespan,
     )
 
     # Allow the Vite dev server (and production origin) to call this API.
