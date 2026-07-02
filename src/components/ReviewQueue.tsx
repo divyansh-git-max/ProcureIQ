@@ -4,6 +4,8 @@ import Severity from "./shared/Severity";
 import AgentFlow from "./shared/AgentFlow";
 import { useApp } from "../context/AppContext";
 import type { Finding } from "../types";
+import "../styles/ReviewQueue.css";
+
 
 export default function ReviewQueue() {
   const { roleInfo } = useApp();
@@ -30,7 +32,7 @@ export default function ReviewQueue() {
   if (!selected) return <div className="loading">Loading review queue…</div>;
 
   return (
-    <div className="review-layout">
+    <div className="review-layout review-queue-layout">
       <section className="panel queue-panel">
         <div className="queue-list">
           {findings.map((f) => (
