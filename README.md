@@ -182,6 +182,11 @@ python -m venv .venv
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
+To Load the postgres Docker before running backend
+
+```bash
+docker compose up -d postgres
+```
 
 For editable backend development:
 

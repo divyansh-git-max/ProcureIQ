@@ -169,21 +169,23 @@ export default function VendorIntelligence() {
               </div>
             </div>
 
-            <div className="risk-formula">
-              <span>Risk score</span>
-              <code>0.35D + 0.30A + 0.20C + 0.15R - δ</code>
-            </div>
+            <div className="vendor-risk-breakdown">
+              <div className="risk-formula">
+                <span>Risk score</span>
+                <code>0.35D + 0.30A + 0.20C + 0.15R - δ</code>
+              </div>
 
-            <div className="risk-parts">
-              {selected.riskParts.map((part) => (
-                <div key={part.label}>
-                  <div>
-                    <span>{part.label} <small>{part.weight} weight</small></span>
-                    <strong>{part.value}</strong>
+              <div className="risk-parts">
+                {selected.riskParts.map((part) => (
+                  <div key={part.label}>
+                    <div>
+                      <span>{part.label} <small>{part.weight} weight</small></span>
+                      <strong>{part.value}</strong>
+                    </div>
+                    <div className="risk-bar-track"><span style={{ width: `${part.value}%` }} /></div>
                   </div>
-                  <div className="risk-bar-track"><span style={{ width: `${part.value}%` }} /></div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </motion.div>
         </AnimatePresence>

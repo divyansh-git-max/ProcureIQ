@@ -80,3 +80,6 @@ graphify-out/*
 !graphify-out/GRAPH_REPORT.md
 !graphify-out/wiki/
 !graphify-out/wiki/**
+*.jsonc
+*.codex
+
