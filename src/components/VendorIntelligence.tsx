@@ -5,6 +5,34 @@ import { fetchVendors } from "../api/client";
 import PanelHeader from "./shared/PanelHeader";
 import type { Vendor } from "../types";
 import { vendors as fallbackVendors } from "../mockData";
+import "../styles/VendorIntelligence.css";
+
+type ForecastTooltipProps = {
+  active?: boolean;
+  label?: string;
+  payload?: Array<{
+    name?: string;
+    value?: number;
+    color?: string;
+    dataKey?: string;
+  }>;
+};
+
+function ForecastTooltip({ active, label, payload }: ForecastTooltipProps) {
+  if (!active || !payload?.length) return null;
+
+  return (
+    <div className="vendor-chart-tooltip">
+      {label && <strong>{label}</strong>}
+      {payload.map((item) => (
+        <span key={item.dataKey ?? item.name}>
+          <i style={{ background: item.color }} />
+          {item.name ?? item.dataKey}: {item.value} days
+        </span>
+      ))}
+    </div>
+  );
+}
 
 export default function VendorIntelligence() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
@@ -65,7 +93,7 @@ export default function VendorIntelligence() {
   const scoreStyle = { "--score": selected.risk } as CSSProperties;
 
   return (
-    <div className="vendor-layout">
+    <div className="vendor-layout vendor-intelligence">
       {error ? <section className="panel vendor-alert">{error}</section> : null}
       <section className="panel vendor-list-panel">
         <PanelHeader eyebrow="Portfolio watchlist" title="Vendor intelligence" action={`${vendors.length} active vendors`} />
@@ -191,7 +219,7 @@ export default function VendorIntelligence() {
         </AnimatePresence>
       </section>
 
-      <section className="panel span-full">
+      <section className="panel span-full vendor-forecast-panel">
         <PanelHeader eyebrow="Predictive signal" title="Expected delivery delay" action="Model: XGBoost v2.4" />
         <div className="forecast-content">
           <div className="forecast-copy">
@@ -202,12 +230,12 @@ export default function VendorIntelligence() {
           </div>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={selected.forecast}>
-              <CartesianGrid stroke="var(--line)" vertical={false} />
-              <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
-              <Tooltip />
-              <Line type="monotone" dataKey="actual" stroke="#888780" strokeWidth={2} dot={false} />
-              <Line type="monotone" dataKey="predicted" stroke="#EF9F27" strokeWidth={2} strokeDasharray="5 4" />
+              <CartesianGrid stroke="rgba(145, 169, 204, 0.12)" vertical={false} />
+              <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8d9bb0" }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "#8d9bb0" }} />
+              <Tooltip content={<ForecastTooltip />} cursor={{ stroke: "rgba(251, 191, 36, 0.18)" }} />
+              <Line type="monotone" dataKey="actual" name="Actual" stroke="#93c5fd" strokeWidth={2.25} dot={false} />
+              <Line type="monotone" dataKey="predicted" name="Predicted" stroke="#f59e0b" strokeWidth={2.5} strokeDasharray="5 4" />
             </LineChart>
           </ResponsiveContainer>
         </div>
