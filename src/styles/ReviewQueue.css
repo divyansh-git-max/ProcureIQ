@@ -1,0 +1,290 @@
+.review-layout.review-queue-layout {
+  grid-template-columns: max-content minmax(0, 1fr);
+  column-gap: 24px;
+}
+/* Override to reduce spacing between queue and evidence panels */
+
+@keyframes review-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes queue-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes selected-card-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(125, 211, 252, 0);
+  }
+  50% {
+    box-shadow: 0 18px 34px rgba(56, 189, 248, 0.12);
+  }
+}
+
+@keyframes confidence-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Minimal ReviewQueue styles, relying on base project styles to keep structure consistent */
+/* Avoid overwriting project structure or style patterns */
+.queue-panel {
+  width: 320px;
+  animation: review-fade-up 420ms ease both;
+}
+.queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+.queue-item {
+  width: 100%;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  background: rgba(8, 15, 28, 0.42);
+  text-align: left;
+  color: var(--text);
+  opacity: 0;
+  animation: queue-item-in 380ms ease both;
+  transition: border-color 180ms ease, background-color 180ms ease, transform 180ms ease;
+}
+.queue-item:nth-child(1) {
+  animation-delay: 60ms;
+}
+.queue-item:nth-child(2) {
+  animation-delay: 120ms;
+}
+.queue-item:nth-child(3) {
+  animation-delay: 180ms;
+}
+.queue-item:hover {
+  transform: translateY(-2px);
+}
+.queue-item.selected {
+  background: linear-gradient(145deg, rgba(14, 32, 50, 0.96), rgba(11, 24, 40, 0.92));
+  border-color: rgba(125, 211, 252, 0.34);
+  animation-name: queue-item-in, selected-card-glow;
+  animation-duration: 380ms, 1600ms;
+  animation-delay: 60ms, 420ms;
+  animation-timing-function: ease, ease-in-out;
+  animation-fill-mode: both, both;
+  animation-iteration-count: 1, 1;
+}
+.queue-item strong {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-strong);
+  line-height: 1.3;
+}
+.queue-item-top,
+.queue-item-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.queue-item-top {
+  font-size: 0.8rem;
+}
+.queue-item-top span:last-child {
+  margin-left: auto;
+}
+.decision-tag {
+  margin-left: auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  text-transform: capitalize;
+  font-size: 0.72rem;
+}
+.decision-tag.approved {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.14);
+}
+.decision-tag.dismissed {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.14);
+}
+.queue-item p {
+  margin: 6px 0 10px;
+  color: #aebbd0;
+}
+.queue-item-foot {
+  justify-content: space-between;
+  color: #aebbd0;
+  font-size: 0.8rem;
+}
+.evidence-head h2 {
+  margin: 16px 0 8px;
+  font-size: clamp(1.3rem, 1.55vw, 1.75rem);
+}
+
+.evidence-panel {
+  animation: review-fade-up 480ms ease 120ms both;
+}
+
+.confidence-block {
+  margin: 20px 0 12px;
+  padding: 1rem 1.5rem;
+  border-radius: var(--radius-md);
+  background: var(--panel-strong);
+}
+.confidence-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  font-weight: 600;
+  font-size: 1.15rem;
+  margin-bottom: 1.2rem;
+  width: 100%;
+}
+
+.confidence-track {
+  background-color: var(--line);
+  border-radius: var(--radius-md);
+  height: 14px;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.confidence-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transform-origin: left center;
+  animation: confidence-fill 800ms ease 260ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .queue-panel,
+  .evidence-panel,
+  .queue-item,
+  .queue-item.selected,
+  .confidence-track span {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .queue-item:hover {
+    transform: none;
+  }
+}
+
+.evidence-section h3 {
+  margin: 0 0 18px;
+  font-size: 1.1rem;
+  color: var(--text-strong);
+}
+
+.evidence-section p {
+  line-height: 1.85;
+  margin: 0 0 18px;
+  border-top: 1px solid var(--line);
+}
+
+.reason-steps {
+  margin: 24px 0 0;
+  padding-left: 20px;
+  line-height: 1.9;
+  color: var(--text-strong);
+}
+
+.citation-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line-strong);
+  background: rgba(14, 23, 41, 0.9);
+}
+
+.citation-card small {
+  color: var(--muted);
+  margin-left: 8px;
+}
+
+.trace-status,
+.doc-status,
+.decision-tag {
+  white-space: nowrap;
+}
+
+.verified-pill {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.14);
+  font-size: 0.74rem;
+}
+
+.decision-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+
+.decision-bar > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.decision-bar small,
+.decision-bar span {
+  display: block;
+}
+
+.decision-bar span {
+  margin-top: 4px;
+  font-size: 0.84rem;
+  color: var(--muted);
+}
+
+.dismiss-button,
+.approve-button {
+  padding-inline: 16px;
+}
+
+.approve-button {
+  border-color: rgba(74, 222, 128, 0.45);
+  background: linear-gradient(145deg, rgba(74, 222, 128, 0.18), rgba(59, 130, 246, 0.18));
+}
+
+.dismiss-button:disabled,
+.approve-button:disabled,
+.upload-card button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+ 
