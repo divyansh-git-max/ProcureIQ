@@ -5,13 +5,19 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.router import api_router
 from app.core.config import settings
-from app.db.bootstrap import bootstrap_db
+from app.db.bootstrap import bootstrap_db, bootstrap_pinecone
 from app.db.session import close_db_pool
 
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     await bootstrap_db()
+
+    try:
+        bootstrap_pinecone()
+    except Exception as e:
+        print(F" Failed to initialize Pinecone: {e}")
+
     yield
     await close_db_pool()
 
