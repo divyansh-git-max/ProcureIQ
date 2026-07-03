@@ -72,7 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Fetch users if we are an admin
   useEffect(() => {
     if (isAdmin) {
-      fetch(`${API_BASE}/auth/users`)
+      fetchWithAuth(`${API_BASE}/auth/users`)
         .then(res => res.json())
         .then(data => {
             // map from DB user role to requestedRole alias if needed, or just use role
@@ -98,13 +98,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return data.detail || "Login failed";
       }
 
-      if (data.user.role === "admin") {
+      if (data.user && data.user.role === "admin") {
         setIsAdmin(true);
         setCurrentUser(null);
-      } else {
+      } else if (data.user) {
         setCurrentUser(data.user);
         setIsAdmin(false);
       }
+      
+      if (data.access_token) sessionStorage.setItem("access_token", data.access_token);
+      if (data.refresh_token) sessionStorage.setItem("refresh_token", data.refresh_token);
+      
       return null;
     } catch (err) {
       return "Network error connecting to backend.";
@@ -116,6 +120,40 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsAdmin(false);
     setAuthMode("login");
     setPage("overview");
+    sessionStorage.removeItem("access_token");
+    sessionStorage.removeItem("refresh_token");
+  }
+
+  async function fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
+    let token = sessionStorage.getItem("access_token");
+    const headers = new Headers(options.headers || {});
+    if (token) headers.set("Authorization", `Bearer ${token}`);
+    
+    let res = await fetch(url, { ...options, headers });
+    
+    if (res.status === 401 || res.status === 403) {
+      const refreshToken = sessionStorage.getItem("refresh_token");
+      if (refreshToken) {
+        const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${refreshToken}` }
+        });
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          sessionStorage.setItem("access_token", refreshData.access_token);
+          if (refreshData.refresh_token) {
+            sessionStorage.setItem("refresh_token", refreshData.refresh_token);
+          }
+          headers.set("Authorization", `Bearer ${refreshData.access_token}`);
+          res = await fetch(url, { ...options, headers });
+        } else {
+          signOut();
+        }
+      } else {
+        signOut();
+      }
+    }
+    return res;
   }
 
   async function submitSignupRequest(
@@ -137,7 +175,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   async function approveUser(id: string) {
     try {
-      const res = await fetch(`${API_BASE}/auth/users/${id}/status`, {
+      const res = await fetchWithAuth(`${API_BASE}/auth/users/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "approved" })
@@ -150,7 +188,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   async function rejectUser(id: string) {
     try {
-      const res = await fetch(`${API_BASE}/auth/users/${id}/status`, {
+      const res = await fetchWithAuth(`${API_BASE}/auth/users/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "rejected" })
