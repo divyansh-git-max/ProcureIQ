@@ -2,6 +2,8 @@ import uuid
 import datetime
 from datetime import timezone
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 import bcrypt as py_bcrypt
 import jwt
 from typing import List
@@ -22,6 +24,24 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+def create_refresh_token(data: dict):
+    to_encode = data.copy()
+    expire = datetime.datetime.now(timezone.utc) + datetime.timedelta(days=7)
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return encoded_jwt
+
+def get_current_admin_user(token: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
+    try:
+        payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        email = payload.get("email")
+        role = payload.get("role")
+        if email is None and role != "admin":
+            raise HTTPException(status_code=403, detail="Forbidden")
+        return email
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 @router.post("/signup", response_model=UserResponse)
 async def signup(user: UserCreate):
@@ -65,20 +85,24 @@ async def login(user: UserLogin):
             raise HTTPException(status_code=403, detail="Your account request is still pending approval.")
             
         access_token = create_access_token(data={"sub": row["id"], "email": row["email"], "role": row["role"]})
+        refresh_token = create_refresh_token(data={"sub": row["id"], "email": row["email"], "role": row["role"]})
         
         user_response = dict(row)
-        return {"access_token": access_token, "token_type": "bearer", "user": user_response}
+        return {"access_token": access_token, "refresh_token": refresh_token ,"token_type": "bearer", "user": user_response}
 
 @router.get("/users", response_model=List[UserResponse])
-async def get_users():
+async def get_users(admin: dict = Depends(get_current_admin_user)):
     # In a real app we'd require admin token dependency here
+
+    # TODO: Add pagination
+    
     async with get_pool().acquire() as conn:
         rows = await conn.fetch("SELECT * FROM users ORDER BY created_at DESC")
         return [dict(r) for r in rows]
 
 @router.patch("/users/{user_id}/status", response_model=UserResponse)
-async def update_user_status(user_id: str, update: UserStatusUpdate):
-    # In a real app we'd require admin token dependency here
+async def update_user_status(user_id: str, update: UserStatusUpdate, admin: dict = Depends(get_current_admin_user)):
+    # Requires admin token dependency
     async with get_pool().acquire() as conn:
         row = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
         if not row:
@@ -93,3 +117,18 @@ async def update_user_status(user_id: str, update: UserStatusUpdate):
         
         updated_row = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
         return dict(updated_row)
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh_token(token: HTTPAuthorizationCredentials = Depends(HTTPBearer())):
+    try:
+        payload = jwt.decode(token.credentials, SECRET_KEY, algorithms=[ALGORITHM])
+        sub = payload.get("sub")
+        email = payload.get("email")
+        role = payload.get("role")
+        if sub is None or email is None or role is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        access_token = create_access_token(data={"sub": sub, "email": email, "role": role})
+        refresh_token = create_refresh_token(data={"sub": sub, "email": email, "role": role})
+        return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")

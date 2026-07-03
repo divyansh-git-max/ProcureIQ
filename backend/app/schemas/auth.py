@@ -22,8 +22,9 @@ class UserResponse(UserBase):
 
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str
-    user: UserResponse
+    user: Optional[UserResponse] = None
 
 class UserStatusUpdate(BaseModel):
     status: str  # "approved" or "rejected"
