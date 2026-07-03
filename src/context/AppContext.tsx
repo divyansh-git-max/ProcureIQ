@@ -119,7 +119,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   async function submitSignupRequest(
-    name: string, email: string, role: string, password: string
+    name: string, email: string, role: string, password?: string
   ): Promise<string | null> {
     try {
         const res = await fetch(`${API_BASE}/auth/signup`, {
