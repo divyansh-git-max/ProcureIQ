@@ -32,7 +32,12 @@ The core idea is simple: the documents already contain the evidence. ProcureIQ c
 
 ## Current Demo
 
-The current app is a working React dashboard backed by a FastAPI scaffold and seeded procurement data. The frontend calls real API routes under `http://localhost:8000/api/v1`.
+The current app is a working React dashboard backed by a FastAPI scaffold and a PostgreSQL database. The frontend calls real API routes under `http://localhost:8000/api/v1`.
+
+### Demo Credentials
+Upon running the backend for the first time, an admin user is automatically created. You can log into the application using:
+- **Email:** `admin@procureiq.demo`
+- **Password:** `admin123`
 
 The demo includes:
 

@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     object_storage_bucket: str = "procureiq-documents"
     vector_store_url: str = "http://localhost:6333"
 
+    pinecone_api_key: str | None = None
+    pinecone_environment: str | None = None
+    pinecone_index_name: str | None = None
+
     openai_api_key: str | None = None
     langsmith_api_key: str | None = None
     web_search_api_key: str | None = None

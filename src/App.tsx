@@ -21,19 +21,88 @@ const ROLE_COLORS: Record<string, string> = {
 // ─── Login Page ───────────────────────────────────────────────────────────────
 function LoginScreen() {
   const { signIn, setAuthMode } = useApp();
-  const [email, setEmail]       = useState("admin@procureiq.com");
+  const [email, setEmail]       = useState("admin@procureiq.demo");
   const [password, setPassword] = useState("admin123");
   const [error, setError]       = useState<string | null>(null);
   const [loading, setLoading]   = useState(false);
+  const [showContactForm, setShowContactForm] = useState(false);
+  const [contactMessage, setContactMessage]   = useState("");
+  const [contactSubmitted, setContactSubmitted] = useState(false);
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!email || !password) { setError("Email and password are required."); return; }
     setLoading(true);
-    setTimeout(() => {
-      const err = signIn(email, password);
-      setLoading(false);
-      if (err) setError(err);
-    }, 600);
+    const err = await signIn(email, password);
+    setLoading(false);
+    if (err) {
+      setError(err);
+      setShowContactForm(true);
+    }
+  }
+
+  function handleContactSubmit() {
+    if (!contactMessage.trim()) return;
+    // In a real app, send this to backend (e.g. email or ticket system)
+    setContactSubmitted(true);
+  }
+
+  if (showContactForm) {
+    return (
+      <div className="auth-shell">
+        <motion.section
+          className="auth-panel"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="auth-brand">
+            <div className="auth-logo">⚡</div>
+            <span className="auth-product">ProcureIQ</span>
+          </div>
+          <div className="auth-divider" />
+          
+          <h2 className="auth-heading">Login Failed</h2>
+          <p className="auth-sub" style={{ color: "#ef4444" }}>{error}</p>
+
+          {contactSubmitted ? (
+            <div style={{ textAlign: "center", padding: "2rem 0" }}>
+              <div className="auth-success-icon" style={{ marginBottom: "1rem" }}>✓</div>
+              <h3 style={{ marginBottom: "0.5rem" }}>Message Sent</h3>
+              <p className="auth-sub">The admin has been notified and will contact you shortly.</p>
+              <button type="button" className="auth-btn-secondary" style={{ marginTop: "1.5rem" }} onClick={() => { setShowContactForm(false); setContactSubmitted(false); setError(null); }}>
+                Back to login
+              </button>
+            </div>
+          ) : (
+            <div className="auth-form">
+              <p style={{ fontSize: "0.9rem", color: "#64748b", marginBottom: "1rem" }}>
+                Having trouble logging in? Send a message directly to the admin team to get your account reviewed.
+              </p>
+              <label className="auth-label">
+                Message to Admin
+                <textarea 
+                  className="auth-input" 
+                  rows={4} 
+                  value={contactMessage} 
+                  onChange={(e) => setContactMessage(e.target.value)} 
+                  placeholder="I requested access yesterday but..."
+                  style={{ resize: "vertical", minHeight: "80px" }}
+                />
+              </label>
+              
+              <div style={{ display: "flex", gap: "1rem" }}>
+                <button type="button" className="auth-btn-secondary" onClick={() => setShowContactForm(false)} style={{ flex: 1 }}>
+                  Cancel
+                </button>
+                <button type="button" className="auth-btn-primary" onClick={handleContactSubmit} style={{ flex: 1 }}>
+                  Send Message
+                </button>
+              </div>
+            </div>
+          )}
+        </motion.section>
+      </div>
+    );
   }
 
   return (
@@ -56,11 +125,6 @@ function LoginScreen() {
         <h2 className="auth-heading">Welcome back</h2>
         <p className="auth-sub">Sign in to your procurement workspace</p>
 
-        {/* Demo hint */}
-        <div className="auth-hint">
-          <strong>Demo credentials pre-filled.</strong> You can also login as any approved
-          user below — e.g. <code>arjun@procureiq.com</code> (no password needed in demo mode).
-        </div>
 
         {error && <div className="auth-error">{error}</div>}
 
@@ -107,31 +171,7 @@ function LoginScreen() {
           </button>
         </div>
 
-        {/* Quick-login tiles */}
-        <div className="auth-divider" />
-        <p className="auth-quick-label">Quick login (demo)</p>
-        <div className="auth-quick-grid">
-          {[
-            { name: "Arjun Mehta", email: "arjun@procureiq.com", role: "Auditor" },
-            { name: "Priya Sharma", email: "priya@procureiq.com", role: "Gatekeeper" },
-            { name: "Ravi Nair", email: "ravi@procureiq.com", role: "Strategist" },
-          ].map((u) => (
-            <button
-              key={u.email}
-              type="button"
-              className="auth-quick-tile"
-              onClick={() => { setEmail(u.email); setPassword("demo"); signIn(u.email, "any"); }}
-            >
-              <span className="quick-avatar" style={{ background: ROLE_COLORS[u.role] }}>
-                {u.name[0]}
-              </span>
-              <span className="quick-info">
-                <strong>{u.name}</strong>
-                <span className="quick-role" style={{ color: ROLE_COLORS[u.role] }}>{u.role}</span>
-              </span>
-            </button>
-          ))}
-        </div>
+
       </motion.section>
     </div>
   );
@@ -142,14 +182,15 @@ function SignupScreen() {
   const { submitSignupRequest, setAuthMode } = useApp();
   const [name, setName]           = useState("");
   const [email, setEmail]         = useState("");
+  const [password, setPassword]   = useState("");
   const [role, setRole]           = useState<RoleName>("Auditor");
   const [wsId, setWsId]           = useState<WorkspaceId>(workspaces[0].id);
   const [error, setError]         = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
-  function handleSubmit() {
-    if (!name || !email) { setError("Name and email are required."); return; }
-    const err = submitSignupRequest(name, email, role, wsId);
+  async function handleSubmit() {
+    if (!name || !email || !password) { setError("Name, email, and password are required."); return; }
+    const err = await submitSignupRequest(name, email, role, password);
     if (err) { setError(err); return; }
     setSubmitted(true);
   }
@@ -204,6 +245,10 @@ function SignupScreen() {
           <label className="auth-label">
             Work email
             <input className="auth-input" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(null); }} placeholder="you@company.com" />
+          </label>
+          <label className="auth-label">
+            Password
+            <input className="auth-input" type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(null); }} placeholder="Create a strong password" />
           </label>
           <label className="auth-label">
             Requested role
@@ -318,15 +363,15 @@ function AdminDashboard() {
                   transition={{ duration: 0.2 }}
                 >
                   <td className="admin-cell-name">
-                    <span className="user-avatar" style={{ background: ROLE_COLORS[u.requestedRole] }}>
+                    <span className="user-avatar" style={{ background: ROLE_COLORS[u.role] }}>
                       {u.name[0]}
                     </span>
                     {u.name}
                   </td>
                   <td className="admin-cell-muted">{u.email}</td>
                   <td>
-                    <span className="role-pill" style={{ color: ROLE_COLORS[u.requestedRole], borderColor: ROLE_COLORS[u.requestedRole] + "44", background: ROLE_COLORS[u.requestedRole] + "15" }}>
-                      {u.requestedRole}
+                    <span className="role-pill" style={{ color: ROLE_COLORS[u.role] || "#7c3aed", borderColor: (ROLE_COLORS[u.role] || "#7c3aed") + "44", background: (ROLE_COLORS[u.role] || "#7c3aed") + "15" }}>
+                      {u.role}
                     </span>
                   </td>
                   <td className="admin-cell-muted">{u.workspaceId}</td>
@@ -336,25 +381,31 @@ function AdminDashboard() {
                     </span>
                   </td>
                   <td className="admin-actions">
-                    {u.status === "pending" && (
+                    {u.role === "admin" ? (
+                      <span className="admin-cell-muted" style={{ fontStyle: "italic", fontSize: "0.85rem" }}>Admin (Protected)</span>
+                    ) : (
                       <>
-                        <button type="button" className="action-btn action-approve" onClick={() => approveUser(u.id)}>
-                          Approve
-                        </button>
-                        <button type="button" className="action-btn action-reject" onClick={() => rejectUser(u.id)}>
-                          Reject
-                        </button>
+                        {u.status === "pending" && (
+                          <>
+                            <button type="button" className="action-btn action-approve" onClick={() => approveUser(u.id)}>
+                              Approve
+                            </button>
+                            <button type="button" className="action-btn action-reject" onClick={() => rejectUser(u.id)}>
+                              Reject
+                            </button>
+                          </>
+                        )}
+                        {u.status === "approved" && (
+                          <button type="button" className="action-btn action-reject" onClick={() => rejectUser(u.id)}>
+                            Revoke
+                          </button>
+                        )}
+                        {u.status === "rejected" && (
+                          <button type="button" className="action-btn action-approve" onClick={() => approveUser(u.id)}>
+                            Reinstate
+                          </button>
+                        )}
                       </>
-                    )}
-                    {u.status === "approved" && (
-                      <button type="button" className="action-btn action-reject" onClick={() => rejectUser(u.id)}>
-                        Revoke
-                      </button>
-                    )}
-                    {u.status === "rejected" && (
-                      <button type="button" className="action-btn action-approve" onClick={() => approveUser(u.id)}>
-                        Reinstate
-                      </button>
                     )}
                   </td>
                 </motion.tr>
