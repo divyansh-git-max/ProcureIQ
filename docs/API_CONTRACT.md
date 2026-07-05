@@ -2,6 +2,33 @@
 
 These route names mirror the existing frontend client.
 
+## Auth
+
+- `POST /api/v1/auth/signup`
+- Body: `{ "name": "...", "email": "...", "password": "...", "role": "..." }`
+- Registers a new user. Defaults to pending status.
+
+- `POST /api/v1/auth/login`
+- Body: `{ "email": "...", "password": "..." }`
+- Returns access and refresh tokens along with user info.
+
+- `GET /api/v1/auth/users`
+- Requires Admin Bearer token.
+- Returns a list of all users.
+
+- `PATCH /api/v1/auth/users/{user_id}/status`
+- Requires Admin Bearer token.
+- Body: `{ "status": "approved|rejected|pending", "role": "..." }`
+- Updates a user's approval status and role.
+
+- `POST /api/v1/auth/refresh`
+- Requires valid Refresh Bearer token.
+- Returns a new set of access and refresh tokens.
+
+- `POST /api/v1/auth/contact`
+- Body: `{ "email": "...", "message": "..." }`
+- Saves a contact message/request message for an existing user.
+
 ## Dashboard
 
 - `GET /api/v1/dashboard/summary`
