@@ -57,6 +57,26 @@ VALUES ($1, $2, $3, $4, $5, $6)
 ON CONFLICT (email) DO NOTHING
 """
 
+_DOCUMENTS_DDL = """
+CREATE TABLE IF NOT EXISTS documents (
+    id TEXT PRIMARY KEY,
+    filename TEXT NOT NULL,
+    status TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+)
+"""
+
+_CHUNKS_DDL = """
+CREATE TABLE IF NOT EXISTS document_chunks (
+    id TEXT PRIMARY KEY,
+    document_id TEXT REFERENCES documents(id) ON DELETE CASCADE,
+    parent_text TEXT NOT NULL,
+    child_text TEXT NOT NULL,
+    page_number INTEGER
+)
+"""
+
 async def bootstrap_db() -> None:
     """Create tables and seed demo vendors when the database is empty."""
     try:
@@ -68,6 +88,9 @@ async def bootstrap_db() -> None:
     from app.db.session import get_pool
 
     async with get_pool().acquire() as conn:
+        await conn.execute(_DOCUMENTS_DDL)
+        await conn.execute(_CHUNKS_DDL)
+        
         await conn.execute(_VENDORS_DDL)
         if await conn.fetchval("SELECT COUNT(*) FROM vendors"):
             pass
