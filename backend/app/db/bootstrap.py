@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
+    request_message TEXT,
     role TEXT NOT NULL,
     status TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -90,6 +91,7 @@ async def bootstrap_db() -> None:
                 )
         
         await conn.execute(_USERS_DDL)
+        await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS request_message TEXT")
         if await conn.fetchval("SELECT COUNT(*) FROM users") == 0:
             salt = bcrypt.gensalt()
             default_admin_pw = bcrypt.hashpw("admin123".encode('utf-8'), salt).decode('utf-8')

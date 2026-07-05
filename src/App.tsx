@@ -8,8 +8,9 @@ import DocumentControl from "./components/DocumentControl";
 import Operations from "./components/Operations";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
-import type { PageId, RoleName, WorkspaceId } from "./context/AppContext";
+import type { PageId, RoleName, WorkspaceId, PendingUser } from "./context/AppContext";
 import { ROLES, workspaces } from "./mockData";
+import { Bell, MessageSquare, X } from "lucide-react";
 
 // ─── Role badge colours ───────────────────────────────────────────────────────
 const ROLE_COLORS: Record<string, string> = {
@@ -20,13 +21,14 @@ const ROLE_COLORS: Record<string, string> = {
 
 // ─── Login Page ───────────────────────────────────────────────────────────────
 function LoginScreen() {
-  const { signIn, setAuthMode } = useApp();
-  const [email, setEmail]       = useState("admin@procureiq.demo");
+  const { signIn, setAuthMode, sendContactMessage } = useApp();
+  const [email, setEmail] = useState("admin@procureiq.demo");
   const [password, setPassword] = useState("admin123");
-  const [error, setError]       = useState<string | null>(null);
-  const [loading, setLoading]   = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingContact, setLoadingContact] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
-  const [contactMessage, setContactMessage]   = useState("");
+  const [contactMessage, setContactMessage] = useState("");
   const [contactSubmitted, setContactSubmitted] = useState(false);
 
   async function handleSubmit() {
@@ -40,10 +42,16 @@ function LoginScreen() {
     }
   }
 
-  function handleContactSubmit() {
+  async function handleContactSubmit() {
     if (!contactMessage.trim()) return;
-    // In a real app, send this to backend (e.g. email or ticket system)
-    setContactSubmitted(true);
+    setLoadingContact(true);
+    const err = await sendContactMessage(email, contactMessage);
+    setLoadingContact(false);
+    if (err) {
+      setError(err);
+    } else {
+      setContactSubmitted(true);
+    }
   }
 
   if (showContactForm) {
@@ -60,7 +68,7 @@ function LoginScreen() {
             <span className="auth-product">ProcureIQ</span>
           </div>
           <div className="auth-divider" />
-          
+
           <h2 className="auth-heading">Login Failed</h2>
           <p className="auth-sub" style={{ color: "#ef4444" }}>{error}</p>
 
@@ -80,22 +88,28 @@ function LoginScreen() {
               </p>
               <label className="auth-label">
                 Message to Admin
-                <textarea 
-                  className="auth-input" 
-                  rows={4} 
-                  value={contactMessage} 
-                  onChange={(e) => setContactMessage(e.target.value)} 
+                <textarea
+                  className="auth-input"
+                  rows={4}
+                  value={contactMessage}
+                  onChange={(e) => setContactMessage(e.target.value)}
                   placeholder="I requested access yesterday but..."
                   style={{ resize: "vertical", minHeight: "80px" }}
                 />
               </label>
-              
+
               <div style={{ display: "flex", gap: "1rem" }}>
                 <button type="button" className="auth-btn-secondary" onClick={() => setShowContactForm(false)} style={{ flex: 1 }}>
                   Cancel
                 </button>
-                <button type="button" className="auth-btn-primary" onClick={handleContactSubmit} style={{ flex: 1 }}>
-                  Send Message
+                <button
+                  type="button"
+                  className="auth-btn-primary"
+                  onClick={handleContactSubmit}
+                  style={{ flex: 1 }}
+                  disabled={loadingContact}
+                >
+                  {loadingContact ? <span className="auth-spinner" /> : "Send Message"}
                 </button>
               </div>
             </div>
@@ -180,12 +194,12 @@ function LoginScreen() {
 // ─── Signup / Request Access Page ────────────────────────────────────────────
 function SignupScreen() {
   const { submitSignupRequest, setAuthMode } = useApp();
-  const [name, setName]           = useState("");
-  const [email, setEmail]         = useState("");
-  const [password, setPassword]   = useState("");
-  const [role, setRole]           = useState<RoleName>("Auditor");
-  const [wsId, setWsId]           = useState<WorkspaceId>(workspaces[0].id);
-  const [error, setError]         = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<RoleName>("Auditor");
+  const [wsId, setWsId] = useState<WorkspaceId>(workspaces[0].id);
+  const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
   async function handleSubmit() {
@@ -287,10 +301,14 @@ function SignupScreen() {
 function AdminDashboard() {
   const { pendingUsers, approveUser, rejectUser, signOut } = useApp();
   const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
+  const [activeRequestUser, setActiveRequestUser] = useState<PendingUser | null>(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
 
   const filtered = pendingUsers.filter((u) => filter === "all" || u.status === filter);
+  const messageRequests = pendingUsers.filter((u) => u.status === "pending" && u.request_message);
+
   const counts = {
-    pending:  pendingUsers.filter((u) => u.status === "pending").length,
+    pending: pendingUsers.filter((u) => u.status === "pending").length,
     approved: pendingUsers.filter((u) => u.status === "approved").length,
     rejected: pendingUsers.filter((u) => u.status === "rejected").length,
   };
@@ -303,9 +321,59 @@ function AdminDashboard() {
           <span className="auth-product">ProcureIQ</span>
           <span className="admin-badge">Admin Console</span>
         </div>
-        <button type="button" className="auth-btn-secondary admin-signout" onClick={signOut}>
-          Sign out
-        </button>
+        <div className="admin-header-actions" style={{ display: "flex", alignItems: "center", gap: "16px", position: "relative" }}>
+          {/* Notification Bell */}
+          <div className="admin-bell-wrap" style={{ position: "relative" }}>
+            <button
+              type="button"
+              className={`admin-bell-btn${notificationsOpen ? " active" : ""}`}
+              onClick={() => setNotificationsOpen(!notificationsOpen)}
+            >
+              <Bell size={20} />
+              {messageRequests.length > 0 && (
+                <span className="bell-badge">{messageRequests.length}</span>
+              )}
+            </button>
+
+            {notificationsOpen && (
+              <>
+                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }} onClick={() => setNotificationsOpen(false)} />
+                <div className="admin-notifications-dropdown" style={{ zIndex: 45 }}>
+                  <div className="dropdown-header">
+                    <h3>Access Request Messages</h3>
+                    {messageRequests.length > 0 && <span className="unread-count">{messageRequests.length} pending</span>}
+                  </div>
+                  <div className="dropdown-body">
+                    {messageRequests.length === 0 ? (
+                      <div className="empty-notifications">No new messages.</div>
+                    ) : (
+                      messageRequests.map((u) => (
+                        <div
+                          key={u.id}
+                          className="notification-item"
+                          onClick={() => {
+                            setActiveRequestUser(u);
+                            setNotificationsOpen(false);
+                          }}
+                        >
+                          <div className="notification-meta">
+                            <span className="notif-name">{u.name}</span>
+                            <span className="notif-role">{u.role}</span>
+                          </div>
+                          <p className="notif-excerpt">{u.request_message}</p>
+                          <span className="notif-time">{new Date(u.created_at).toLocaleDateString()}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <button type="button" className="auth-btn-secondary admin-signout" onClick={signOut}>
+            Sign out
+          </button>
+        </div>
       </header>
 
       <div className="admin-body">
@@ -366,7 +434,22 @@ function AdminDashboard() {
                     <span className="user-avatar" style={{ background: ROLE_COLORS[u.role] }}>
                       {u.name[0]}
                     </span>
-                    {u.name}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span>{u.name}</span>
+                        {u.request_message && (
+                          <button
+                            type="button"
+                            className="message-indicator-badge"
+                            onClick={() => setActiveRequestUser(u)}
+                            title="View access request message"
+                          >
+                            <MessageSquare size={11} />
+                            <span>Message</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="admin-cell-muted">{u.email}</td>
                   <td>
@@ -414,6 +497,100 @@ function AdminDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Details Modal Overlay */}
+      <AnimatePresence>
+        {activeRequestUser && (
+          <div className="admin-modal-overlay" onClick={() => setActiveRequestUser(null)}>
+            <motion.div
+              className="admin-modal-content"
+              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="modal-header">
+                <h2>Access Request Details</h2>
+                <button type="button" className="close-btn" onClick={() => setActiveRequestUser(null)}>
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="modal-body">
+                <div className="user-profile-summary">
+                  <span className="user-avatar-large" style={{ background: ROLE_COLORS[activeRequestUser.role] }}>
+                    {activeRequestUser.name[0]}
+                  </span>
+                  <div>
+                    <h3>{activeRequestUser.name}</h3>
+                    <p className="user-email">{activeRequestUser.email}</p>
+                  </div>
+                </div>
+
+                <div className="metadata-grid">
+                  <div className="meta-card">
+                    <span className="meta-label">Requested Role</span>
+                    <span className="role-pill" style={{ color: ROLE_COLORS[activeRequestUser.role] || "#7c3aed", borderColor: (ROLE_COLORS[activeRequestUser.role] || "#7c3aed") + "44", background: (ROLE_COLORS[activeRequestUser.role] || "#7c3aed") + "15", display: "inline-block", width: "fit-content", fontSize: "0.8rem", padding: "2px 8px" }}>
+                      {activeRequestUser.role}
+                    </span>
+                  </div>
+                  <div className="meta-card">
+                    <span className="meta-label">Workspace</span>
+                    <span className="meta-value">{activeRequestUser.workspaceId || "Default"}</span>
+                  </div>
+                  <div className="meta-card">
+                    <span className="meta-label">Submitted On</span>
+                    <span className="meta-value">{new Date(activeRequestUser.created_at).toLocaleDateString()}</span>
+                  </div>
+                  <div className="meta-card">
+                    <span className="meta-label">Current Status</span>
+                    <span className={`status-pill status-${activeRequestUser.status}`}>
+                      {activeRequestUser.status.charAt(0).toUpperCase() + activeRequestUser.status.slice(1)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="message-container">
+                  <h4>Message to Admin</h4>
+                  <p className="message-text">
+                    {activeRequestUser.request_message || "No message provided."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn-sec" onClick={() => setActiveRequestUser(null)}>
+                  Close
+                </button>
+                {activeRequestUser.status === "pending" && (
+                  <div style={{ display: "flex", gap: "8px" }}>
+                    <button
+                      type="button"
+                      className="action-btn action-reject"
+                      onClick={async () => {
+                        await rejectUser(activeRequestUser.id);
+                        setActiveRequestUser(null);
+                      }}
+                    >
+                      Reject
+                    </button>
+                    <button
+                      type="button"
+                      className="action-btn action-approve"
+                      onClick={async () => {
+                        await approveUser(activeRequestUser.id);
+                        setActiveRequestUser(null);
+                      }}
+                    >
+                      Approve
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -444,10 +621,10 @@ function Shell() {
 
   // Regular user view
   const pageContent: Record<PageId, React.ReactNode> = {
-    overview:   <CommandCenter />,
-    review:     <ReviewQueue />,
-    vendors:    <VendorIntelligence />,
-    documents:  <DocumentControl />,
+    overview: <CommandCenter />,
+    review: <ReviewQueue />,
+    vendors: <VendorIntelligence />,
+    documents: <DocumentControl />,
     operations: <Operations />,
   };
 

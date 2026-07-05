@@ -14,10 +14,11 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
-class UserResponse(UserBase):
+class UserResponse(UserBase):   
     id: str
     role: str
     status: str
+    request_message: Optional[str] = None
     created_at: datetime
 
 class TokenResponse(BaseModel):
@@ -29,3 +30,11 @@ class TokenResponse(BaseModel):
 class UserStatusUpdate(BaseModel):
     status: str  # "approved" or "rejected"
     role: Optional[str] = None
+
+class ContactMessageRequest(BaseModel):
+    email: EmailStr
+    message: str
+
+class StatusResponse(BaseModel):
+    status: str
+    message: str

@@ -9,7 +9,7 @@ import jwt
 from typing import List
 
 from app.db.session import get_pool
-from app.schemas.auth import UserCreate, UserLogin, UserResponse, TokenResponse, UserStatusUpdate
+from app.schemas.auth import UserCreate, UserLogin, UserResponse, TokenResponse, UserStatusUpdate, ContactMessageRequest, StatusResponse
 from app.core.config import settings
 
 router = APIRouter()
@@ -66,6 +66,9 @@ async def signup(user: UserCreate):
         )
         
         row = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
+        print("===========================================================")
+        print(dict(row))
+        print("===========================================================")
         return dict(row)
 
 @router.post("/login", response_model=TokenResponse)
@@ -132,3 +135,15 @@ async def refresh_token(token: HTTPAuthorizationCredentials = Depends(HTTPBearer
         return {"access_token": access_token, "refresh_token": refresh_token, "token_type": "bearer"}
     except jwt.PyJWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+@router.post("/contact")
+async def user_request(payload: ContactMessageRequest):
+    async with get_pool().acquire() as conn:
+        user = await conn.fetchrow("SELECT id FROM users WHERE email = $1", payload.email)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        await conn.execute(
+            "UPDATE users SET request_message = $1 WHERE email = $2",
+            payload.message, payload.email
+        )
+        return {"status": "success", "message": "Contact message updated"}
