@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS users (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
+    request_message TEXT,
     role TEXT NOT NULL,
     status TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -90,8 +91,11 @@ async def bootstrap_db() -> None:
                 )
         
         await conn.execute(_USERS_DDL)
+        await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS request_message TEXT")
         if await conn.fetchval("SELECT COUNT(*) FROM users") == 0:
             salt = bcrypt.gensalt()
+            
+            # Create Admin
             default_admin_pw = bcrypt.hashpw("admin123".encode('utf-8'), salt).decode('utf-8')
             await conn.execute(
                 _INSERT_USER,
@@ -100,6 +104,42 @@ async def bootstrap_db() -> None:
                 "admin@procureiq.demo",
                 default_admin_pw,
                 "admin",
+                "approved"
+            )
+
+            # Create Auditor
+            default_auditor_pw = bcrypt.hashpw("auditor123".encode('utf-8'), salt).decode('utf-8')
+            await conn.execute(
+                _INSERT_USER,
+                str(uuid.uuid4()),
+                "Auditor User",
+                "auditor@procureiq.demo",
+                default_auditor_pw,
+                "Auditor",
+                "approved"
+            )
+
+            # Create Gatekeeper
+            default_gatekeeper_pw = bcrypt.hashpw("gatekeeper123".encode('utf-8'), salt).decode('utf-8')
+            await conn.execute(
+                _INSERT_USER,
+                str(uuid.uuid4()),
+                "Gatekeeper User",
+                "gatekeeper@procureiq.demo",
+                default_gatekeeper_pw,
+                "Gatekeeper",
+                "approved"
+            )
+
+            # Create Strategist
+            default_strategist_pw = bcrypt.hashpw("strategist123".encode('utf-8'), salt).decode('utf-8')
+            await conn.execute(
+                _INSERT_USER,
+                str(uuid.uuid4()),
+                "Strategist User",
+                "strategist@procureiq.demo",
+                default_strategist_pw,
+                "Strategist",
                 "approved"
             )
 
