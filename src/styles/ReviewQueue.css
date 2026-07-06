@@ -29,10 +29,10 @@
 @keyframes selected-card-glow {
   0%,
   100% {
-    box-shadow: 0 0 0 rgba(125, 211, 252, 0);
+    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
   }
   50% {
-    box-shadow: 0 18px 34px rgba(56, 189, 248, 0.12);
+    box-shadow: 0 18px 34px rgba(59, 130, 246, 0.12);
   }
 }
 
@@ -63,7 +63,7 @@
   padding: 14px;
   border-radius: var(--radius-lg);
   border: 1px solid transparent;
-  background: rgba(8, 15, 28, 0.42);
+  background: var(--bg-alt);
   text-align: left;
   color: var(--text);
   opacity: 0;
@@ -83,8 +83,8 @@
   transform: translateY(-2px);
 }
 .queue-item.selected {
-  background: linear-gradient(145deg, rgba(14, 32, 50, 0.96), rgba(11, 24, 40, 0.92));
-  border-color: rgba(125, 211, 252, 0.34);
+  background: var(--panel-strong);
+  border-color: rgba(59, 130, 246, 0.34);
   animation-name: queue-item-in, selected-card-glow;
   animation-duration: 380ms, 1600ms;
   animation-delay: 60ms, 420ms;
@@ -118,20 +118,20 @@
   font-size: 0.72rem;
 }
 .decision-tag.approved {
-  color: #86efac;
+  color: #10b981;
   background: rgba(34, 197, 94, 0.14);
 }
 .decision-tag.dismissed {
-  color: #cbd5e1;
+  color: #9ca3af;
   background: rgba(148, 163, 184, 0.14);
 }
 .queue-item p {
   margin: 6px 0 10px;
-  color: #aebbd0;
+  color: #9ca3af;
 }
 .queue-item-foot {
   justify-content: space-between;
-  color: #aebbd0;
+  color: #9ca3af;
   font-size: 0.8rem;
 }
 .evidence-head h2 {
@@ -220,7 +220,7 @@
   padding: 18px 24px;
   border-radius: var(--radius-md);
   border: 1px solid var(--line-strong);
-  background: rgba(14, 23, 41, 0.9);
+  background: var(--panel);
 }
 
 .citation-card small {
@@ -238,7 +238,7 @@
   margin-left: auto;
   padding: 4px 10px;
   border-radius: 999px;
-  color: #86efac;
+  color: #10b981;
   background: rgba(34, 197, 94, 0.14);
   font-size: 0.74rem;
 }
