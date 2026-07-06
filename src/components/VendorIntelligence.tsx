@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 import { AnimatePresence, motion } from "framer-motion";
 import { fetchVendors } from "../api/client";
@@ -90,7 +90,6 @@ export default function VendorIntelligence() {
 
   if (loading) return <div className="loading">Loading vendor intelligence…</div>;
   if (!selected) return <div className="loading">Vendor intelligence is unavailable.</div>;
-  const scoreStyle = { "--score": selected.risk } as CSSProperties;
 
   return (
     <div className="vendor-layout vendor-intelligence">
@@ -187,8 +186,43 @@ export default function VendorIntelligence() {
             </div>
 
             <div className="risk-score-hero">
-              <div className="score-ring" style={scoreStyle}>
-                <div><strong>{selected.risk}</strong><span>/ 100</span></div>
+              <div className="score-ring-container">
+                <svg width="120" height="120" viewBox="0 0 120 120" className="score-svg">
+                  {/* Background track */}
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke="rgba(148, 163, 184, 0.12)"
+                    strokeWidth="8"
+                  />
+                  {/* Animated progress */}
+                  <motion.circle
+                    cx="60"
+                    cy="60"
+                    r="50"
+                    fill="none"
+                    stroke="url(#scoreGradient)"
+                    strokeWidth="10"
+                    strokeLinecap="round"
+                    strokeDasharray={314.159}
+                    initial={{ strokeDashoffset: 314.159 }}
+                    animate={{ strokeDashoffset: 314.159 - (314.159 * selected.risk) / 100 }}
+                    transition={{ duration: 1.2, ease: "easeOut" }}
+                    transform="rotate(-90 60 60)"
+                  />
+                  <defs>
+                    <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor={selected.risk >= 75 ? "#ef4444" : selected.risk >= 50 ? "#f59e0b" : "#3b82f6"} />
+                      <stop offset="100%" stopColor={selected.risk >= 75 ? "#b91c1c" : selected.risk >= 50 ? "#d97706" : "#2563eb"} />
+                    </linearGradient>
+                  </defs>
+                </svg>
+                <div className="score-ring-content">
+                  <strong>{selected.risk}</strong>
+                  <span>/ 100</span>
+                </div>
               </div>
               <div>
                 <span>Composite vendor risk</span>
