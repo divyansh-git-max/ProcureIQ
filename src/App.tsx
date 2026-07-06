@@ -14,16 +14,30 @@ import { Bell, MessageSquare, X } from "lucide-react";
 
 // ─── Role badge colours ───────────────────────────────────────────────────────
 const ROLE_COLORS: Record<string, string> = {
-  Auditor: "#7c3aed",
-  Gatekeeper: "#0ea5e9",
+  Auditor: "#3b82f6",
+  Gatekeeper: "#6366f1",
   Strategist: "#10b981",
 };
+
+// ─── Shared Hero Component ───────────────────────────────────────────────────
+function AuthHero() {
+  return (
+    <div className="auth-hero hidden-mobile">
+      <div className="auth-hero-content">
+        <div className="auth-logo-large">⚡</div>
+        <h1>ProcureIQ</h1>
+        <p>Next-generation AI procurement intelligence and vendor risk management.</p>
+      </div>
+    </div>
+  );
+}
 
 // ─── Login Page ───────────────────────────────────────────────────────────────
 function LoginScreen() {
   const { signIn, setAuthMode, sendContactMessage } = useApp();
   const [email, setEmail] = useState("admin@procureiq.demo");
   const [password, setPassword] = useState("admin123");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingContact, setLoadingContact] = useState(false);
@@ -57,7 +71,9 @@ function LoginScreen() {
   if (showContactForm) {
     return (
       <div className="auth-shell">
-        <motion.section
+        <AuthHero />
+        <div className="auth-content">
+          <motion.section
           className="auth-panel"
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -115,78 +131,90 @@ function LoginScreen() {
             </div>
           )}
         </motion.section>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="auth-shell">
-      <motion.section
-        className="auth-panel"
-        initial={{ opacity: 0, y: 20, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-      >
-        {/* Brand */}
-        <div className="auth-brand">
-          <div className="auth-logo">⚡</div>
-          <span className="auth-product">ProcureIQ</span>
-          <span className="auth-tagline">AI Procurement Intelligence</span>
-        </div>
-
-        <div className="auth-divider" />
-
-        <h2 className="auth-heading">Welcome back</h2>
-        <p className="auth-sub">Sign in to your procurement workspace</p>
+      <AuthHero />
+      <div className="auth-content">
+        <motion.section
+          className="auth-panel"
+          initial={{ opacity: 0, y: 20, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <h2 className="auth-heading">Welcome back</h2>
+          <p className="auth-sub">Sign in to your procurement workspace</p>
 
 
-        {error && <div className="auth-error">{error}</div>}
+          {error && <div className="auth-error">{error}</div>}
 
-        <div className="auth-form">
-          <label className="auth-label">
-            Email address
-            <input
-              id="login-email"
-              type="email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setError(null); }}
-              placeholder="you@company.com"
-              className="auth-input"
-            />
-          </label>
+          <div className="auth-form">
+            <label className="auth-label">
+              Email address
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setError(null); }}
+                placeholder="you@company.com"
+                className="auth-input"
+              />
+            </label>
 
-          <label className="auth-label">
-            Password
-            <input
-              id="login-password"
-              type="password"
-              value={password}
-              onChange={(e) => { setPassword(e.target.value); setError(null); }}
-              placeholder="••••••••"
-              className="auth-input"
-            />
-          </label>
+            <label className="auth-label">
+              Password
+              <div style={{ position: "relative" }}>
+                <input
+                  id="login-password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(null); }}
+                  placeholder="••••••••"
+                  className="auth-input"
+                  style={{ paddingRight: "48px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute", right: "16px", top: "50%", transform: "translateY(-50%)",
+                    background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", padding: 0
+                  }}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  )}
+                </button>
+              </div>
+            </label>
 
-          <button
-            id="login-submit"
-            type="button"
-            className="auth-btn-primary"
-            onClick={handleSubmit}
-            disabled={loading}
-          >
-            {loading ? <span className="auth-spinner" /> : "Sign in"}
-          </button>
-        </div>
+            <button
+              id="login-submit"
+              type="button"
+              className="auth-btn-primary"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? <span className="auth-spinner" /> : "Sign in"}
+            </button>
+          </div>
 
-        <div className="auth-footer">
-          Don't have access?{" "}
-          <button type="button" className="auth-link" onClick={() => setAuthMode("signup")}>
-            Request access
-          </button>
-        </div>
-
-
-      </motion.section>
+          <div className="auth-footer">
+            Don't have access?{" "}
+            <button type="button" className="auth-link" onClick={() => setAuthMode("signup")}>
+              Request access
+            </button>
+          </div>
+        </motion.section>
+      </div>
     </div>
   );
 }
@@ -197,14 +225,18 @@ function SignupScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState<RoleName>("Auditor");
   const [wsId, setWsId] = useState<WorkspaceId>(workspaces[0].id);
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit() {
     if (!name || !email || !password) { setError("Name, email, and password are required."); return; }
+    setLoading(true);
     const err = await submitSignupRequest(name, email, role, password);
+    setLoading(false);
     if (err) { setError(err); return; }
     setSubmitted(true);
   }
@@ -212,87 +244,118 @@ function SignupScreen() {
   if (submitted) {
     return (
       <div className="auth-shell">
-        <motion.section
-          className="auth-panel auth-panel--center"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="auth-success-icon">✓</div>
-          <h2 className="auth-heading">Request submitted</h2>
-          <p className="auth-sub">
-            Your access request for the <strong>{role}</strong> role has been sent to the admin.
-            You'll be notified once it's approved.
-          </p>
-          <button type="button" className="auth-btn-secondary" onClick={() => setAuthMode("login")}>
-            Back to login
-          </button>
-        </motion.section>
+        <AuthHero />
+        <div className="auth-content">
+          <motion.section
+            className="auth-panel auth-panel--center"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="auth-success-icon">✓</div>
+            <h2 className="auth-heading">Request submitted</h2>
+            <p className="auth-sub">
+              Your access request for the <strong>{role}</strong> role has been sent to the admin.
+              You'll be notified once it's approved.
+            </p>
+            <button type="button" className="auth-btn-secondary" onClick={() => setAuthMode("login")}>
+              Back to login
+            </button>
+          </motion.section>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="auth-shell">
-      <motion.section
-        className="auth-panel"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
-      >
-        <div className="auth-brand">
-          <div className="auth-logo">⚡</div>
-          <span className="auth-product">ProcureIQ</span>
-        </div>
-        <div className="auth-divider" />
+      <AuthHero />
+      <div className="auth-content">
+        <motion.section
+          className="auth-panel"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <h2 className="auth-heading">Request access</h2>
+          <p className="auth-sub">An admin will review and approve your role assignment.</p>
 
-        <h2 className="auth-heading">Request access</h2>
-        <p className="auth-sub">An admin will review and approve your role assignment.</p>
+          {error && <div className="auth-error">{error}</div>}
 
-        {error && <div className="auth-error">{error}</div>}
+          <div className="auth-form">
+            <label className="auth-label">
+              Full name
+              <input className="auth-input" value={name} onChange={(e) => { setName(e.target.value); setError(null); }} placeholder="Aman Verma" />
+            </label>
+            <label className="auth-label">
+              Work email
+              <input className="auth-input" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(null); }} placeholder="you@company.com" />
+            </label>
+            <label className="auth-label">
+              Password
+              <div style={{ position: "relative" }}>
+                <input 
+                  className="auth-input" 
+                  type={showPassword ? "text" : "password"} 
+                  value={password} 
+                  onChange={(e) => { setPassword(e.target.value); setError(null); }} 
+                  placeholder="Create a strong password" 
+                  style={{ paddingRight: "48px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute", right: "16px", top: "50%", transform: "translateY(-50%)",
+                    background: "transparent", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center", padding: 0
+                  }}
+                  title={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                  )}
+                </button>
+              </div>
+            </label>
+            <label className="auth-label">
+              Requested role
+              <select className="auth-input" value={role} onChange={(e) => setRole(e.target.value as RoleName)}>
+                {Object.entries(ROLES).map(([key, info]) => (
+                  <option key={key} value={key}>{key} — {info.description}</option>
+                ))}
+              </select>
+            </label>
+            <label className="auth-label">
+              Workspace
+              <select className="auth-input" value={wsId} onChange={(e) => setWsId(e.target.value as WorkspaceId)}>
+                {workspaces.map((w) => (
+                  <option key={w.id} value={w.id}>{w.name} · {w.project}</option>
+                ))}
+              </select>
+            </label>
 
-        <div className="auth-form">
-          <label className="auth-label">
-            Full name
-            <input className="auth-input" value={name} onChange={(e) => { setName(e.target.value); setError(null); }} placeholder="Aman Verma" />
-          </label>
-          <label className="auth-label">
-            Work email
-            <input className="auth-input" type="email" value={email} onChange={(e) => { setEmail(e.target.value); setError(null); }} placeholder="you@company.com" />
-          </label>
-          <label className="auth-label">
-            Password
-            <input className="auth-input" type="password" value={password} onChange={(e) => { setPassword(e.target.value); setError(null); }} placeholder="Create a strong password" />
-          </label>
-          <label className="auth-label">
-            Requested role
-            <select className="auth-input" value={role} onChange={(e) => setRole(e.target.value as RoleName)}>
-              {Object.entries(ROLES).map(([key, info]) => (
-                <option key={key} value={key}>{key} — {info.description}</option>
-              ))}
-            </select>
-          </label>
-          <label className="auth-label">
-            Workspace
-            <select className="auth-input" value={wsId} onChange={(e) => setWsId(e.target.value as WorkspaceId)}>
-              {workspaces.map((w) => (
-                <option key={w.id} value={w.id}>{w.name} · {w.project}</option>
-              ))}
-            </select>
-          </label>
+            <button 
+              id="signup-submit" 
+              type="button" 
+              className="auth-btn-primary" 
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? <span className="auth-spinner" /> : "Submit request"}
+            </button>
+          </div>
 
-          <button id="signup-submit" type="button" className="auth-btn-primary" onClick={handleSubmit}>
-            Submit request
-          </button>
-        </div>
-
-        <div className="auth-footer">
-          Already have access?{" "}
-          <button type="button" className="auth-link" onClick={() => setAuthMode("login")}>
-            Sign in
-          </button>
-        </div>
-      </motion.section>
+          <div className="auth-footer">
+            Already have access?{" "}
+            <button type="button" className="auth-link" onClick={() => setAuthMode("login")}>
+              Sign in
+            </button>
+          </div>
+        </motion.section>
+      </div>
     </div>
   );
 }
