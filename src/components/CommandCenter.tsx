@@ -131,18 +131,32 @@ export default function CommandCenter() {
       <section className="grid-2 command-lower-grid">
         <article className="panel span-2">
           <PanelHeader eyebrow="Priority queue" title="Findings needing attention" action="View queue" />
-          <div className="finding-list">
+          <div className="priority-cards-grid">
             {topFindings.map((f) => (
-              <button key={f.id} className="finding-row" onClick={() => setPage("review")}>
-                <Severity level={f.severity} />
-                <span className="finding-main">
-                  <strong>{f.title}</strong>
-                  <small>{f.vendor} · {f.source}</small>
-                </span>
-                <span className="finding-value">
-                  <strong>{f.amount}</strong>
-                  <small>{f.confidence}% confidence</small>
-                </span>
+              <button key={f.id} className="priority-card" onClick={() => setPage("review")}>
+                <div className="priority-card-header">
+                  <Severity level={f.severity} />
+                  <div className="confidence-pill">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <span>{f.confidence}% Conf.</span>
+                  </div>
+                </div>
+                
+                <div className="priority-card-body">
+                  <h3 className="finding-title">{f.title}</h3>
+                  <p className="finding-meta">
+                    <span className="vendor-tag">{f.vendor}</span>
+                    <span className="dot">·</span>
+                    <span className="source-tag">{f.source}</span>
+                  </p>
+                </div>
+                
+                <div className="priority-card-footer">
+                  <span className="finding-amount">{f.amount}</span>
+                  <div className="action-arrow">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                  </div>
+                </div>
               </button>
             ))}
           </div>
