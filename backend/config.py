@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     langsmith_api_key: str | None = None
     web_search_api_key: str | None = None
+    
+    groq_api_key: str | None = None
+    groq_model: str = "llama-3.3-70b-versatile"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
