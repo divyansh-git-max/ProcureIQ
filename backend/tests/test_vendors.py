@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from app.main import app
+from main import app
 
 
 def test_list_vendors_returns_seed_data_without_database() -> None:
