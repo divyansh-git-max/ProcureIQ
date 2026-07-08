@@ -147,3 +147,13 @@ async def user_request(payload: ContactMessageRequest):
             payload.message, payload.email
         )
         return {"status": "success", "message": "Contact message updated"}
+
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: str, admin: dict = Depends(get_current_admin_user)):
+    async with get_pool().acquire() as conn:
+        row = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
+        if not row:
+            raise HTTPException(status_code=404, detail="User not found")
+            
+        await conn.execute("DELETE FROM users WHERE id = $1", user_id)
+        return {"status": "success", "message": "User deleted"}

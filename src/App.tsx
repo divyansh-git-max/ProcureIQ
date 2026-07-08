@@ -10,7 +10,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useState } from "react";
 import type { PageId, RoleName, WorkspaceId, PendingUser } from "./context/AppContext";
 import { ROLES, workspaces } from "./mockData";
-import { Bell, MessageSquare, X } from "lucide-react";
+import { Bell, MessageSquare, X, Flag, CheckCircle2, XCircle, Trash2, RefreshCcw, Loader2 } from "lucide-react";
+import AdminSidebar from "./components/AdminSidebar";
 
 // ─── Role badge colours ───────────────────────────────────────────────────────
 const ROLE_COLORS: Record<string, string> = {
@@ -362,204 +363,246 @@ function SignupScreen() {
 
 // ─── Admin Approval Dashboard ─────────────────────────────────────────────────
 function AdminDashboard() {
-  const { pendingUsers, approveUser, rejectUser, signOut } = useApp();
-  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("pending");
+  const { pendingUsers, approveUser, rejectUser, flagUser, deleteUser, signOut } = useApp();
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected" | "flagged">("pending");
   const [activeRequestUser, setActiveRequestUser] = useState<PendingUser | null>(null);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [adminPage, setAdminPage] = useState<"users" | "stats">("users");
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const [loadingAction, setLoadingAction] = useState<{ id: string; action: string } | null>(null);
+
+  const handleAction = async (id: string, actionName: string, actionFn: (id: string) => Promise<void>) => {
+    if (actionName === "delete") {
+      if (!window.confirm("Are you sure you want to permanently delete this user?")) return;
+    }
+    setLoadingAction({ id, action: actionName });
+    try {
+      await actionFn(id);
+    } finally {
+      setLoadingAction(null);
+    }
+  };
 
   const filtered = pendingUsers.filter((u) => filter === "all" || u.status === filter);
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const paginatedUsers = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const messageRequests = pendingUsers.filter((u) => u.status === "pending" && u.request_message);
 
   const counts = {
     pending: pendingUsers.filter((u) => u.status === "pending").length,
     approved: pendingUsers.filter((u) => u.status === "approved").length,
     rejected: pendingUsers.filter((u) => u.status === "rejected").length,
+    flagged: pendingUsers.filter((u) => u.status === "flagged").length,
   };
 
   return (
-    <div className="admin-shell">
-      <header className="admin-header">
-        <div className="admin-header-brand">
-          <span className="auth-logo" style={{ fontSize: 20 }}>⚡</span>
-          <span className="auth-product">ProcureIQ</span>
-          <span className="admin-badge">Admin Console</span>
-        </div>
-        <div className="admin-header-actions" style={{ display: "flex", alignItems: "center", gap: "16px", position: "relative" }}>
-          {/* Notification Bell */}
-          <div className="admin-bell-wrap" style={{ position: "relative" }}>
-            <button
-              type="button"
-              className={`admin-bell-btn${notificationsOpen ? " active" : ""}`}
-              onClick={() => setNotificationsOpen(!notificationsOpen)}
-            >
-              <Bell size={20} />
-              {messageRequests.length > 0 && (
-                <span className="bell-badge">{messageRequests.length}</span>
-              )}
-            </button>
+    <div className="app-shell">
+      <AdminSidebar page={adminPage} setPage={setAdminPage} />
+      <main className="main-shell">
+        <header className="topbar">
+          <div className="page-heading">
+            <span className="eyebrow">Admin Console</span>
+            <h1>{adminPage === "users" ? "User Management" : "System Statistics"}</h1>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            <div className="admin-bell-wrap" style={{ position: "relative" }}>
+              <button
+                type="button"
+                className={`admin-bell-btn${notificationsOpen ? " active" : ""}`}
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+              >
+                <Bell size={20} />
+                {messageRequests.length > 0 && (
+                  <span className="bell-badge">{messageRequests.length}</span>
+                )}
+              </button>
 
-            {notificationsOpen && (
-              <>
-                <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }} onClick={() => setNotificationsOpen(false)} />
-                <div className="admin-notifications-dropdown" style={{ zIndex: 45 }}>
-                  <div className="dropdown-header">
-                    <h3>Access Request Messages</h3>
-                    {messageRequests.length > 0 && <span className="unread-count">{messageRequests.length} pending</span>}
-                  </div>
-                  <div className="dropdown-body">
-                    {messageRequests.length === 0 ? (
-                      <div className="empty-notifications">No new messages.</div>
-                    ) : (
-                      messageRequests.map((u) => (
-                        <div
-                          key={u.id}
-                          className="notification-item"
-                          onClick={() => {
-                            setActiveRequestUser(u);
-                            setNotificationsOpen(false);
-                          }}
-                        >
-                          <div className="notification-meta">
-                            <span className="notif-name">{u.name}</span>
-                            <span className="notif-role">{u.role}</span>
+              {notificationsOpen && (
+                <>
+                  <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 40 }} onClick={() => setNotificationsOpen(false)} />
+                  <div className="admin-notifications-dropdown" style={{ zIndex: 45 }}>
+                    <div className="dropdown-header">
+                      <h3>Access Request Messages</h3>
+                      {messageRequests.length > 0 && <span className="unread-count">{messageRequests.length} pending</span>}
+                    </div>
+                    <div className="dropdown-body">
+                      {messageRequests.length === 0 ? (
+                        <div className="empty-notifications">No new messages.</div>
+                      ) : (
+                        messageRequests.map((u) => (
+                          <div
+                            key={u.id}
+                            className="notification-item"
+                            onClick={() => {
+                              setActiveRequestUser(u);
+                              setNotificationsOpen(false);
+                            }}
+                          >
+                            <div className="notification-meta">
+                              <span className="notif-name">{u.name}</span>
+                              <span className="notif-role">{u.role}</span>
+                            </div>
+                            <p className="notif-excerpt">{u.request_message}</p>
+                            <span className="notif-time">{new Date(u.created_at).toLocaleDateString()}</span>
                           </div>
-                          <p className="notif-excerpt">{u.request_message}</p>
-                          <span className="notif-time">{new Date(u.created_at).toLocaleDateString()}</span>
-                        </div>
-                      ))
-                    )}
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <button type="button" className="auth-btn-secondary admin-signout" onClick={signOut}>
+              Sign out
+            </button>
+          </div>
+        </header>
+
+        <div className="page-frame">
+          <div className="page-stage">
+            {adminPage === "stats" ? (
+              <div className="admin-body">
+                <div className="admin-stats">
+                  {[
+                    { label: "Pending", count: counts.pending, color: "#f59e0b" },
+                    { label: "Approved", count: counts.approved, color: "#10b981" },
+                    { label: "Rejected", count: counts.rejected, color: "#ef4444" },
+                    { label: "Flagged", count: counts.flagged, color: "#dc2626" },
+                  ].map((s) => (
+                    <div className="admin-stat-card" key={s.label}>
+                      <span className="stat-count" style={{ color: s.color }}>{s.count}</span>
+                      <span className="stat-label">{s.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="admin-body">
+                <div className="admin-table-header">
+                  <h2 className="admin-title">User Access Requests</h2>
+                  <div className="admin-filters">
+                    {(["all", "pending", "approved", "rejected", "flagged"] as const).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        className={`admin-filter-btn${filter === f ? " active" : ""}`}
+                        onClick={() => { setFilter(f); setCurrentPage(1); }}
+                      >
+                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              </>
+
+                <div className="admin-table-wrap">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th style={{ textAlign: "right" }}>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paginatedUsers.length === 0 && (
+                        <tr><td colSpan={5} className="admin-empty">No users in this filter.</td></tr>
+                      )}
+                      {paginatedUsers.map((u) => (
+                        <motion.tr
+                          key={u.id}
+                          className="admin-row"
+                          initial={{ opacity: 0, x: -8 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: 0.2 }}
+                        >
+                          <td className="admin-cell-name">
+                            <span className="user-avatar" style={{ background: ROLE_COLORS[u.role] }}>
+                              {u.name[0]}
+                            </span>
+                            <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                                {u.status === "flagged" && <Flag size={14} color="#dc2626" />}
+                                <span>{u.name}</span>
+                                {u.request_message && (
+                                  <button
+                                    type="button"
+                                    className="message-indicator-badge"
+                                    onClick={() => setActiveRequestUser(u)}
+                                    title="View access request message"
+                                  >
+                                    <MessageSquare size={11} />
+                                    <span>Message</span>
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="admin-cell-muted">{u.email}</td>
+                          <td>
+                            <span className="role-pill" style={{ color: ROLE_COLORS[u.role] || "#7c3aed", borderColor: (ROLE_COLORS[u.role] || "#7c3aed") + "44", background: (ROLE_COLORS[u.role] || "#7c3aed") + "15" }}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td>
+                            <span className={`status-badge status-badge-${u.status}`}>
+                              {u.status.charAt(0).toUpperCase() + u.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="admin-actions">
+                            {u.role === "admin" ? (
+                              <span className="admin-cell-muted" style={{ fontStyle: "italic", fontSize: "0.85rem" }}>Admin (Protected)</span>
+                            ) : (
+                              <div className="action-icon-group" style={{ justifyContent: "flex-end" }}>
+                                {(u.status === "pending" || u.status === "flagged") && (
+                                  <button type="button" disabled={loadingAction !== null} className="action-icon-btn approve" title="Approve" onClick={() => handleAction(u.id, "approve", approveUser)}>
+                                    {loadingAction?.id === u.id && loadingAction?.action === "approve" ? <Loader2 size={20} className="spin" /> : <CheckCircle2 size={20} />}
+                                  </button>
+                                )}
+                                {u.status === "rejected" && (
+                                  <button type="button" disabled={loadingAction !== null} className="action-icon-btn approve" title="Reinstate" onClick={() => handleAction(u.id, "reinstate", approveUser)}>
+                                    {loadingAction?.id === u.id && loadingAction?.action === "reinstate" ? <Loader2 size={20} className="spin" /> : <RefreshCcw size={20} />}
+                                  </button>
+                                )}
+                                {(u.status === "pending" || u.status === "approved") && (
+                                  <button type="button" disabled={loadingAction !== null} className={`action-icon-btn ${u.status === "approved" ? "revoke" : "reject"}`} title={u.status === "approved" ? "Revoke" : "Reject"} onClick={() => handleAction(u.id, "reject", rejectUser)}>
+                                    {loadingAction?.id === u.id && loadingAction?.action === "reject" ? <Loader2 size={20} className="spin" /> : <XCircle size={20} />}
+                                  </button>
+                                )}
+                                {u.status !== "flagged" && (
+                                  <button type="button" disabled={loadingAction !== null} className="action-icon-btn flag" title="Flag" onClick={() => handleAction(u.id, "flag", flagUser)}>
+                                    {loadingAction?.id === u.id && loadingAction?.action === "flag" ? <Loader2 size={20} className="spin" /> : <Flag size={20} />}
+                                  </button>
+                                )}
+                                {u.status === "flagged" && (
+                                  <button type="button" disabled={loadingAction !== null} className="action-icon-btn delete" title="Delete" onClick={() => handleAction(u.id, "delete", deleteUser)}>
+                                    {loadingAction?.id === u.id && loadingAction?.action === "delete" ? <Loader2 size={20} className="spin" /> : <Trash2 size={20} />}
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {totalPages > 1 && (
+                    <div className="pagination-controls">
+                      <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</button>
+                      <span>Page {currentPage} of {totalPages}</span>
+                      <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</button>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
-          <button type="button" className="auth-btn-secondary admin-signout" onClick={signOut}>
-            Sign out
-          </button>
         </div>
-      </header>
-
-      <div className="admin-body">
-        <div className="admin-stats">
-          {[
-            { label: "Pending", count: counts.pending, color: "#f59e0b" },
-            { label: "Approved", count: counts.approved, color: "#10b981" },
-            { label: "Rejected", count: counts.rejected, color: "#ef4444" },
-          ].map((s) => (
-            <div className="admin-stat-card" key={s.label}>
-              <span className="stat-count" style={{ color: s.color }}>{s.count}</span>
-              <span className="stat-label">{s.label}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="admin-table-header">
-          <h2 className="admin-title">User Access Requests</h2>
-          <div className="admin-filters">
-            {(["all", "pending", "approved", "rejected"] as const).map((f) => (
-              <button
-                key={f}
-                type="button"
-                className={`admin-filter-btn${filter === f ? " active" : ""}`}
-                onClick={() => setFilter(f)}
-              >
-                {f.charAt(0).toUpperCase() + f.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Requested Role</th>
-                <th>Workspace</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr><td colSpan={6} className="admin-empty">No users in this filter.</td></tr>
-              )}
-              {filtered.map((u) => (
-                <motion.tr
-                  key={u.id}
-                  className="admin-row"
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <td className="admin-cell-name">
-                    <span className="user-avatar" style={{ background: ROLE_COLORS[u.role] }}>
-                      {u.name[0]}
-                    </span>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <span>{u.name}</span>
-                        {u.request_message && (
-                          <button
-                            type="button"
-                            className="message-indicator-badge"
-                            onClick={() => setActiveRequestUser(u)}
-                            title="View access request message"
-                          >
-                            <MessageSquare size={11} />
-                            <span>Message</span>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="admin-cell-muted">{u.email}</td>
-                  <td>
-                    <span className="role-pill" style={{ color: ROLE_COLORS[u.role] || "#7c3aed", borderColor: (ROLE_COLORS[u.role] || "#7c3aed") + "44", background: (ROLE_COLORS[u.role] || "#7c3aed") + "15" }}>
-                      {u.role}
-                    </span>
-                  </td>
-                  <td className="admin-cell-muted">{u.workspaceId}</td>
-                  <td>
-                    <span className={`status-pill status-${u.status}`}>
-                      {u.status.charAt(0).toUpperCase() + u.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="admin-actions">
-                    {u.role === "admin" ? (
-                      <span className="admin-cell-muted" style={{ fontStyle: "italic", fontSize: "0.85rem" }}>Admin (Protected)</span>
-                    ) : (
-                      <>
-                        {u.status === "pending" && (
-                          <>
-                            <button type="button" className="action-btn action-approve" onClick={() => approveUser(u.id)}>
-                              Approve
-                            </button>
-                            <button type="button" className="action-btn action-reject" onClick={() => rejectUser(u.id)}>
-                              Reject
-                            </button>
-                          </>
-                        )}
-                        {u.status === "approved" && (
-                          <button type="button" className="action-btn action-reject" onClick={() => rejectUser(u.id)}>
-                            Revoke
-                          </button>
-                        )}
-                        {u.status === "rejected" && (
-                          <button type="button" className="action-btn action-approve" onClick={() => approveUser(u.id)}>
-                            Reinstate
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      </main>
 
       {/* Details Modal Overlay */}
       <AnimatePresence>
@@ -607,9 +650,10 @@ function AdminDashboard() {
                   </div>
                   <div className="meta-card">
                     <span className="meta-label">Current Status</span>
-                    <span className={`status-pill status-${activeRequestUser.status}`}>
-                      {activeRequestUser.status.charAt(0).toUpperCase() + activeRequestUser.status.slice(1)}
-                    </span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                      <span className={`status-indicator status-${activeRequestUser.status}`} />
+                      <span>{activeRequestUser.status.charAt(0).toUpperCase() + activeRequestUser.status.slice(1)}</span>
+                    </div>
                   </div>
                 </div>
 
