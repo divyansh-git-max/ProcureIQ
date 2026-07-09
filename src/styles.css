@@ -113,7 +113,6 @@ a:focus-visible {
 
 .brand,
 .workspace-switcher,
-.sidebar-status,
 .panel,
 .kpi-card,
 .upload-card,
@@ -128,17 +127,9 @@ a:focus-visible {
 
 .brand {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-}
-
-.brand-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  background: var(--accent);
-  box-shadow: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
 }
 
 .brand strong,
@@ -155,8 +146,8 @@ a:focus-visible {
 .brand strong,
 .workspace-switcher span {
   display: block;
-  font-size: 0.95rem;
-  font-weight: 650;
+  font-size: 0.82rem;
+  font-weight: 580;
   letter-spacing: -0.01em;
 }
 
@@ -185,60 +176,76 @@ a:focus-visible {
 .brand small,
 .workspace-switcher small {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
 }
 
 .workspace-switcher {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 10px;
+  padding: 9px 10px;
   width: 100%;
   text-align: left;
-  border: 1px solid var(--line-strong);
-  background: linear-gradient(145deg, rgba(14, 23, 41, 0.96), rgba(17, 28, 50, 0.84));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.workspace-switcher:hover {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.22);
+}
+
+.workspace-switcher-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.workspace-switcher-icon {
+  color: var(--muted);
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .workspace-switcher-wrap {
   position: relative;
+  margin-top: 10px;
 }
 
 .workspace-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   display: grid;
   place-items: center;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #07111f;
   background: linear-gradient(145deg, #93c5fd, #6ee7b7);
+  flex-shrink: 0;
 }
 
-.workspace-switcher em {
-  margin-left: auto;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-style: normal;
-  font-size: 0.72rem;
-  color: var(--text-strong);
-  background: rgba(59, 130, 246, 0.12);
-}
+/* .workspace-switcher em removed — icon used instead */
 
 .workspace-menu {
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(100% + 10px);
+  bottom: calc(100% + 8px);
   z-index: 25;
   display: grid;
-  gap: 8px;
-  padding: 8px;
+  gap: 4px;
+  padding: 6px;
   border: 1px solid var(--line-strong);
-  border-radius: 18px;
-  background: rgba(8, 15, 28, 0.96);
-  backdrop-filter: blur(18px);
-  box-shadow: var(--shadow);
+  border-radius: 12px;
+  background: rgba(8, 15, 28, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35), var(--shadow);
 }
 
 .workspace-menu button {
@@ -339,7 +346,11 @@ a:focus-visible {
 
 .sidebar-status {
   margin-top: auto;
-  padding: 14px 16px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .status-head {
@@ -759,11 +770,15 @@ a:focus-visible {
 .kpi-card,
 .upload-card,
 .health-banner,
-.sidebar-status,
-.brand,
-.workspace-switcher {
+.brand {
   position: relative;
   overflow: hidden;
+}
+
+/* sidebar-status and workspace-switcher must NOT clip their children */
+.sidebar-status,
+.workspace-switcher-wrap {
+  overflow: visible;
 }
 
 .kpi-label {
@@ -2870,7 +2885,7 @@ a:focus-visible {
 .admin-filters { display: flex; gap: 6px; }
 .admin-filter-btn { padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(145, 169, 204, 0.16); background: transparent; color: #8d9bb0; font-size: 0.8rem; cursor: pointer; transition: all 180ms ease; }
 .admin-filter-btn:hover, .admin-filter-btn.active { border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
-.admin-table-wrap { border-radius: 18px; border: 1px solid rgba(145, 169, 204, 0.14); background: rgba(11, 19, 33, 0.72); overflow: hidden; backdrop-filter: blur(12px); }
+.admin-table-wrap { border-radius: 18px; border: 1px solid rgba(145, 169, 204, 0.14); background: rgba(11, 19, 33, 0.72); overflow: auto; min-width: 950px; backdrop-filter: blur(12px); }
 .admin-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .admin-table thead tr { border-bottom: 1px solid rgba(145, 169, 204, 0.14); }
 .admin-table th { padding: 13px 16px; text-align: left; font-size: 0.74rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: #8d9bb0; }
@@ -3379,3 +3394,130 @@ a:focus-visible {
   color: white;
   transform: translateX(4px);
 }
+/* Admin Status Indicator */
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.status-indicator.status-pending { background-color: #f59e0b; }
+.status-indicator.status-approved { background-color: #10b981; }
+.status-indicator.status-rejected { background-color: #ef4444; }
+.status-indicator.status-flagged { background-color: #dc2626; box-shadow: 0 0 4px #dc2626; }
+
+/* Action Dropdown */
+.action-dropdown {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  outline: none;
+}
+.action-dropdown:focus {
+  border-color: var(--accent);
+}
+
+/* Pagination Controls */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--line);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.pagination-controls button {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  color: var(--text);
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* Status Indicator Dot (on Avatar) */
+.status-indicator-dot {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--panel);
+  z-index: 10;
+}
+.status-indicator-dot.status-pending { background-color: #f59e0b; box-shadow: 0 0 4px rgba(245, 158, 11, 0.4); }
+.status-indicator-dot.status-approved { background-color: #10b981; box-shadow: 0 0 4px rgba(16, 185, 129, 0.4); }
+.status-indicator-dot.status-rejected { background-color: #ef4444; box-shadow: 0 0 4px rgba(239, 68, 68, 0.4); }
+.status-indicator-dot.status-flagged { background-color: #dc2626; box-shadow: 0 0 6px #dc2626; }
+
+/* Action Icon Group */
+.action-icon-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.action-icon-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  border-radius: 4px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.action-icon-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--line);
+}
+.action-icon-btn.approve:hover { color: #10b981; border-color: rgba(16, 185, 129, 0.3); background: rgba(16, 185, 129, 0.1); }
+.action-icon-btn.flag:hover { color: #facc15; border-color: rgba(250, 204, 21, 0.3); background: rgba(250, 204, 21, 0.1); }
+.action-icon-btn.reject:hover, .action-icon-btn.delete:hover { color: #ef4444; border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.1); }
+/* Utility: Spin animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+/* Action icon buttons: permanent colors */
+.action-icon-btn.approve { color: #10b981; }
+.action-icon-btn.approve:hover { color: #10b981; background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.3); }
+.action-icon-btn.revoke { color: #f97316; }
+.action-icon-btn.revoke:hover { color: #f97316; background: rgba(249, 115, 22, 0.12); border-color: rgba(249, 115, 22, 0.3); }
+.action-icon-btn.flag { color: #facc15; }
+.action-icon-btn.flag:hover { color: #facc15; background: rgba(250, 204, 21, 0.12); border-color: rgba(250, 204, 21, 0.3); }
+.action-icon-btn.reject { color: #ef4444; }
+.action-icon-btn.reject:hover { color: #ef4444; background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.3); }
+.action-icon-btn.delete { color: #ef4444; }
+.action-icon-btn.delete:hover { color: #ef4444; background: rgba(239, 68, 68, 0.12); border-color: rgba(239, 68, 68, 0.3); }
+.action-icon-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Status badge column */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+}
+.status-badge-pending  { color: #f59e0b; background: rgba(245, 158, 11, 0.1); border-color: rgba(245, 158, 11, 0.25); }
+.status-badge-approved { color: #10b981; background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.25); }
+.status-badge-rejected { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.25); }
+.status-badge-flagged  { color: #dc2626; background: rgba(220, 38, 38, 0.15); border-color: rgba(220, 38, 38, 0.35); box-shadow: 0 0 6px rgba(220, 38, 38, 0.2); }

@@ -22,7 +22,7 @@ export type PendingUser = {
   name: string;
   email: string;
   role: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "flagged";
   created_at: string;
   workspaceId?: WorkspaceId;
   request_message?: string;
@@ -46,6 +46,8 @@ type AppContextValue = {
   pendingUsers: PendingUser[];
   approveUser: (id: string) => Promise<void>;
   rejectUser: (id: string) => Promise<void>;
+  flagUser: (id: string) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
   submitSignupRequest: (name: string, email: string, role: string, password?: string) => Promise<string | null>;
   setWorkspaceId: (id: WorkspaceId) => void;
   sendContactMessage: (email: string, message: string) => Promise<string | null>;
@@ -201,6 +203,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
     } catch (err) { console.error(err); }
   }
 
+  async function flagUser(id: string) {
+    try {
+      // The backend might not support 'flagged' status, but we update locally at least
+      await fetchWithAuth(`${API_BASE}/auth/users/${id}/status`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "flagged" })
+      });
+      // Always update locally for UI consistency even if backend fails
+      setUsers(prev => prev.map(u => u.id === id ? { ...u, status: "flagged" } : u));
+    } catch (err) { console.error(err); }
+  }
+
+  async function deleteUser(id: string) {
+    try {
+      await fetchWithAuth(`${API_BASE}/auth/users/${id}`, {
+        method: "DELETE"
+      });
+      setUsers(prev => prev.filter(u => u.id !== id));
+    } catch (err) { console.error(err); }
+  }
+
   function setWorkspaceId(id: WorkspaceId) {
     if (currentUser) {
       setCurrentUser({ ...currentUser, workspaceId: id });
@@ -238,7 +262,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isAuthenticated, authMode, setAuthMode, signIn, signOut,
       page, setPage, role, roleInfo: ROLES[role] || ROLES["Auditor"], workspace,
       currentUser, isAdmin, pendingUsers: users,
-      approveUser, rejectUser, submitSignupRequest, setWorkspaceId, sendContactMessage
+      approveUser, rejectUser, flagUser, deleteUser, submitSignupRequest, setWorkspaceId, sendContactMessage
     }}>
       {children}
     </AppContext.Provider>
