@@ -17,11 +17,8 @@ export default function AdminSidebar({ page, setPage }: AdminSidebarProps) {
   return (
     <aside className="sidebar">
       <div className="brand">
-        <div className="brand-mark" />
-        <div>
-          <strong>ProcureIQ</strong>
-          <small>Admin Console</small>
-        </div>
+        <strong>ProcureIQ</strong>
+        <small>Admin Console</small>
       </div>
 
       <nav style={{ marginTop: "24px" }}>

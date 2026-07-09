@@ -113,7 +113,6 @@ a:focus-visible {
 
 .brand,
 .workspace-switcher,
-.sidebar-status,
 .panel,
 .kpi-card,
 .upload-card,
@@ -128,17 +127,9 @@ a:focus-visible {
 
 .brand {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px;
-}
-
-.brand-mark {
-  width: 42px;
-  height: 42px;
-  border-radius: var(--radius-md);
-  background: var(--accent);
-  box-shadow: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
 }
 
 .brand strong,
@@ -155,8 +146,8 @@ a:focus-visible {
 .brand strong,
 .workspace-switcher span {
   display: block;
-  font-size: 0.95rem;
-  font-weight: 650;
+  font-size: 0.82rem;
+  font-weight: 580;
   letter-spacing: -0.01em;
 }
 
@@ -185,60 +176,76 @@ a:focus-visible {
 .brand small,
 .workspace-switcher small {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.72rem;
 }
 
 .workspace-switcher {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 10px;
+  padding: 9px 10px;
   width: 100%;
   text-align: left;
-  border: 1px solid var(--line-strong);
-  background: linear-gradient(145deg, rgba(14, 23, 41, 0.96), rgba(17, 28, 50, 0.84));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: transparent;
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.workspace-switcher:hover {
+  background: rgba(59, 130, 246, 0.06);
+  border-color: rgba(59, 130, 246, 0.22);
+}
+
+.workspace-switcher-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.workspace-switcher-icon {
+  color: var(--muted);
+  flex-shrink: 0;
+  opacity: 0.7;
 }
 
 .workspace-switcher-wrap {
   position: relative;
+  margin-top: 10px;
 }
 
 .workspace-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
   display: grid;
   place-items: center;
-  font-size: 0.82rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #07111f;
   background: linear-gradient(145deg, #93c5fd, #6ee7b7);
+  flex-shrink: 0;
 }
 
-.workspace-switcher em {
-  margin-left: auto;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-style: normal;
-  font-size: 0.72rem;
-  color: var(--text-strong);
-  background: rgba(59, 130, 246, 0.12);
-}
+/* .workspace-switcher em removed — icon used instead */
 
 .workspace-menu {
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(100% + 10px);
+  bottom: calc(100% + 8px);
   z-index: 25;
   display: grid;
-  gap: 8px;
-  padding: 8px;
+  gap: 4px;
+  padding: 6px;
   border: 1px solid var(--line-strong);
-  border-radius: 18px;
-  background: rgba(8, 15, 28, 0.96);
-  backdrop-filter: blur(18px);
-  box-shadow: var(--shadow);
+  border-radius: 12px;
+  background: rgba(8, 15, 28, 0.97);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.35), var(--shadow);
 }
 
 .workspace-menu button {
@@ -339,7 +346,11 @@ a:focus-visible {
 
 .sidebar-status {
   margin-top: auto;
-  padding: 14px 16px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
 .status-head {
@@ -759,11 +770,15 @@ a:focus-visible {
 .kpi-card,
 .upload-card,
 .health-banner,
-.sidebar-status,
-.brand,
-.workspace-switcher {
+.brand {
   position: relative;
   overflow: hidden;
+}
+
+/* sidebar-status and workspace-switcher must NOT clip their children */
+.sidebar-status,
+.workspace-switcher-wrap {
+  overflow: visible;
 }
 
 .kpi-label {
