@@ -68,7 +68,7 @@ __pycache__/
 
 **/*[Cc]laude_export*.html
 Explainable*.pdf
-
+Kaya*.pdf
 
 graphify-out/
 .graphify*/
@@ -81,5 +81,9 @@ graphify-out/*
 !graphify-out/wiki/
 !graphify-out/wiki/**
 *.jsonc
+/.agents/
+.agents/
+/.codex/
+.codex/
 *.codex
 
