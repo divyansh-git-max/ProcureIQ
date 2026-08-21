@@ -31,14 +31,19 @@ def create_app() -> FastAPI:
     )
 
     # Allow the Vite dev server (and production origin) to call this API.
-    # Add any extra origins to the list as needed.
+    # Set ALLOWED_ORIGINS in your env as a comma-separated list, e.g.:
+    #   ALLOWED_ORIGINS=https://procure-iq.vercel.app,https://your-custom-domain.com
+    _default_origins = [
+        "http://localhost:5173",   # Vite dev server
+        "http://localhost:4173",   # Vite preview
+        "http://localhost:3000",   # fallback (CRA / other)
+    ]
+    _extra = settings.allowed_origins  # e.g. "https://procure-iq.vercel.app"
+    _origins = _default_origins + [o.strip() for o in _extra.split(",") if o.strip()]
+
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",   # Vite dev server
-            "http://localhost:4173",   # Vite preview
-            "http://localhost:3000",   # fallback (CRA / other)
-        ],
+        allow_origins=_origins,
         allow_credentials=True,
         allow_methods=["*"],   # GET, POST, PUT, DELETE, OPTIONS, etc.
         allow_headers=["*"],   # Authorization, Content-Type, etc.
