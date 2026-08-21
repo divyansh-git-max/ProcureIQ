@@ -30,27 +30,14 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Allow the Vite dev server (and production origin) to call this API.
-    # Set ALLOWED_ORIGINS in your env as a comma-separated list, e.g.:
-    #   ALLOWED_ORIGINS=https://procure-iq.vercel.app,https://your-custom-domain.com
-    _default_origins = [
-        "http://localhost:5173",   # Vite dev server
-        "http://localhost:4173",   # Vite preview
-        "http://localhost:3000",   # fallback (CRA / other)
-    ]
-    _extra = settings.allowed_origins
-    # Strip whitespace, quotes, and trailing slashes so matching is robust
-    _parsed_extra = [o.strip().strip("\"'").rstrip("/") for o in _extra.split(",") if o.strip()]
-    _origins = _default_origins + _parsed_extra
-    
-    print(f"[*] CORS Allowed Origins: {_origins}")
-
+    # Open CORS to all origins — safe for a demo/dev deployment.
+    # Tighten to specific origins once backend auth (JWT) is the security boundary.
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=_origins,
-        allow_credentials=True,
-        allow_methods=["*"],   # GET, POST, PUT, DELETE, OPTIONS, etc.
-        allow_headers=["*"],   # Authorization, Content-Type, etc.
+        allow_origins=["*"],
+        allow_credentials=False,
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
