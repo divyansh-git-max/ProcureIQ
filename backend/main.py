@@ -42,6 +42,12 @@ def create_app() -> FastAPI:
 
     app.include_router(api_router, prefix=settings.api_v1_prefix)
 
+    # Explicit catch-all OPTIONS handler — guarantees preflight always returns 200
+    # regardless of middleware execution order.
+    @app.options("/{rest_of_path:path}")
+    async def preflight_handler(rest_of_path: str) -> dict:
+        return {}
+
     @app.get("/health", tags=["health"])
     async def health_check() -> dict[str, str]:
         return {"status": "ok", "service": settings.app_name}
