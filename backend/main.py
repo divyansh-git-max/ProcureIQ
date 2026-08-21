@@ -38,8 +38,12 @@ def create_app() -> FastAPI:
         "http://localhost:4173",   # Vite preview
         "http://localhost:3000",   # fallback (CRA / other)
     ]
-    _extra = settings.allowed_origins  # e.g. "https://procure-iq.vercel.app"
-    _origins = _default_origins + [o.strip() for o in _extra.split(",") if o.strip()]
+    _extra = settings.allowed_origins
+    # Strip whitespace and trailing slashes so matching is robust
+    _parsed_extra = [o.strip().rstrip("/") for o in _extra.split(",") if o.strip()]
+    _origins = _default_origins + _parsed_extra
+    
+    print(f"[*] CORS Allowed Origins: {_origins}")
 
     app.add_middleware(
         CORSMiddleware,
