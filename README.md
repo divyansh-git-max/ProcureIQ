@@ -30,9 +30,17 @@ The core idea is simple: the documents already contain the evidence. ProcureIQ c
 - Shows vendor risk, risk score components, exposure, and delivery-delay forecasts.
 - Tracks operations telemetry, RAG quality, agent routing correctness, traces, and guardrail logs.
 
-## Current Demo
+## Live Demo 🚀
 
-The current app is a working React dashboard backed by a FastAPI scaffold and a PostgreSQL database. The frontend calls real API routes under `http://localhost:8000/api/v1`.
+| | URL |
+|---|---|
+| **Frontend** | https://procure-iq-liard.vercel.app |
+| **Backend API** | https://procureiq-production-c4e4.up.railway.app |
+| **API Docs** | https://procureiq-production-c4e4.up.railway.app/docs |
+
+> **Status:** Live MVP — core authentication, vendor intelligence, and dashboard are fully wired to the backend. The full agentic document pipeline (OCR → LangGraph → RAG) is in active development.
+
+## Current Demo
 
 ### Demo Credentials
 Upon running the backend for the first time, default users for all roles are automatically created. You can log into the application using:
@@ -252,24 +260,25 @@ The Operations workspace already exposes RAG metrics, routing correctness, trace
 
 ## Project Status
 
-Implemented:
+**Shipped & Live:**
 
-- React/Vite dashboard with role-aware workspaces.
-- FastAPI route scaffold matching the frontend API client.
+- React/Vite dashboard with role-aware workspaces — deployed on Vercel.
+- FastAPI backend with JWT authentication — deployed on Railway.
+- PostgreSQL on Neon — live with seeded demo data.
 - Seed procurement data and generated demo PDFs.
 - Pydantic schemas for dashboard, findings, vendors, documents, and operations.
-- Service and agent module boundaries for the planned backend.
-- Graphify project graph artifacts for team navigation.
+- Full RBAC: Admin, Auditor, Gatekeeper, Strategist roles.
 
-In progress / planned:
+**Active Development (Roadmap):**
 
-- Real OCR/VLM extraction pipeline.
-- Persistent PostgreSQL repositories.
-- Vector index integration.
-- Live LangGraph execution behind the agent modules.
+- Real OCR/VLM extraction pipeline (foundation in `backend/ingestion/ocr.py`).
+- Live LangGraph agent execution behind the agent module boundaries.
+- Vector index integration (Pinecone index provisioned).
 - Real background ingestion jobs with Celery/Redis.
-- External vendor reputation search.
-- Production deployment and CI/CD.
+- Persistent finding and document repositories.
+- External vendor reputation search via web agent.
+- CI/CD pipeline and automated test suite.
+
 
 ## Why ProcureIQ Is Different
 
