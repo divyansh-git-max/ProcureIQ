@@ -39,8 +39,8 @@ def create_app() -> FastAPI:
         "http://localhost:3000",   # fallback (CRA / other)
     ]
     _extra = settings.allowed_origins
-    # Strip whitespace and trailing slashes so matching is robust
-    _parsed_extra = [o.strip().rstrip("/") for o in _extra.split(",") if o.strip()]
+    # Strip whitespace, quotes, and trailing slashes so matching is robust
+    _parsed_extra = [o.strip().strip("\"'").rstrip("/") for o in _extra.split(",") if o.strip()]
     _origins = _default_origins + _parsed_extra
     
     print(f"[*] CORS Allowed Origins: {_origins}")
