@@ -185,7 +185,7 @@ The frontend is wired to these backend routes:
 
 See `docs/API_CONTRACT.md` for the route contract and `docs/ARCHITECTURE.md` for the system flow.
 
-## Local Setup
+### Local Setup
 
 ### Frontend
 
@@ -194,34 +194,29 @@ npm install
 npm run dev
 ```
 
-The frontend expects the backend at `http://localhost:8000` by default. To point it somewhere else, set:
+The frontend expects the backend at `http://localhost:8000` by default. To point it to the live Render deployment or another backend, create a `.env` file in the root directory:
 
 ```bash
-VITE_API_URL=http://localhost:8000
+VITE_API_URL=https://procureiq-backend.onrender.com
 ```
 
-### Backend
+### Backend (Dockerized)
+
+The backend is fully containerized with Docker, meaning you do not need to install Tesseract OCR or complex Python libraries on your host machine.
+
+Make sure Docker Desktop is running, then simply run:
 
 ```bash
-cd backend
-python -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-To Load the postgres Docker before running backend
-
-```bash
-docker compose up -d postgres
+docker-compose up --build
 ```
 
-For editable backend development:
+This single command will:
+1. Spin up a local **Redis** instance (for Celery and caching).
+2. Build and start the **FastAPI web server** on port 8000.
+3. Build and start the **Celery background worker**.
+4. Automatically hot-reload your Python code whenever you save a file.
 
-```bash
-cd backend
-pip install -e ".[dev]"
-pytest
-```
+*(Note: The Celery worker is temporarily set to sleep in `docker-compose.yml` until the background tasks are fully implemented. When you are ready to write background tasks, uncomment the celery command in `docker-compose.yml`.)*
 
 ## Demo Data
 
@@ -263,7 +258,8 @@ The Operations workspace already exposes RAG metrics, routing correctness, trace
 **Shipped & Live:**
 
 - React/Vite dashboard with role-aware workspaces — deployed on Vercel.
-- FastAPI backend with JWT authentication — deployed on Railway.
+- FastAPI backend with JWT authentication — deployed on **Render**.
+- Production-grade Docker Compose architecture (FastAPI + Celery + Redis).
 - PostgreSQL on Neon — live with seeded demo data.
 - Seed procurement data and generated demo PDFs.
 - Pydantic schemas for dashboard, findings, vendors, documents, and operations.
