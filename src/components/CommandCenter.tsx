@@ -41,11 +41,18 @@ export default function CommandCenter() {
   const { setPage } = useApp();
   const [summary, setSummary] = useState<Summary | null>(null);
   const [topFindings, setTopFindings] = useState<Finding[]>([]);
+  // animKey increments whenever the primary finding changes → AgentFlow replays its intro
+  const [animKey, setAnimKey] = useState(0);
 
   useEffect(() => {
     fetchSummary().then(setSummary);
     fetchFindings().then((data) => setTopFindings(data.slice(0, 3)));
   }, []);
+
+  // replay animation whenever the primary finding changes
+  useEffect(() => {
+    setAnimKey((k) => k + 1);
+  }, [topFindings]);
 
   if (!summary) return <div className="loading">Loading command center…</div>;
 
@@ -161,24 +168,29 @@ export default function CommandCenter() {
             ))}
           </div>
         </article>
+      </section>
 
+      {/* ── Full-width agent reasoning graph ─────────────────────── */}
+      <section>
         <article className="panel command-agent-panel">
           <PanelHeader eyebrow="Agent activity" title="Live reasoning graph" action="Streaming" />
+
           {primaryFinding && (
-            <>
-              <div className="agent-focus-card">
-                <Severity level={primaryFinding.severity} />
-                <strong>{primaryFinding.title}</strong>
-                <span>{primaryFinding.id} · {primaryFinding.confidence}% judge confidence</span>
-              </div>
-              <AgentFlow path={primaryFinding.agentPath} />
-              <div className="agent-health-strip">
-                <span>4 agents active</span>
-                <span>RAG verified</span>
-                <span>HITL gated</span>
-              </div>
-            </>
+            <div className="agent-focus-card">
+              <Severity level={primaryFinding.severity} />
+              <strong>{primaryFinding.title}</strong>
+              <span>{primaryFinding.id} · {primaryFinding.confidence}% judge confidence</span>
+            </div>
           )}
+
+          {/* AgentFlow — key={animKey} forces full re-mount (replay intro) when finding changes */}
+          <AgentFlow key={animKey} path={primaryFinding?.agentPath ?? []} />
+
+          <div className="agent-health-strip">
+            <span>4 agents active</span>
+            <span>RAG verified</span>
+            <span>HITL gated</span>
+          </div>
         </article>
       </section>
     </div>

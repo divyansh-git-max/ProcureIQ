@@ -14,9 +14,9 @@ from config import settings
 
 router = APIRouter()
 
-SECRET_KEY = getattr(settings, "secret_key", "dev_secret_key_change_me")
+SECRET_KEY = getattr(settings, "secret_key", "secret_key")
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7 # 1 week
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24 * 7
 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -66,9 +66,7 @@ async def signup(user: UserCreate):
         )
         
         row = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
-        print("===========================================================")
         print(dict(row))
-        print("===========================================================")
         return dict(row)
 
 @router.post("/login", response_model=TokenResponse)

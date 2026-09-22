@@ -7,7 +7,6 @@ import fitz  # PyMuPDF
 import pytesseract
 from PIL import Image
 
-# Automatically point to the default Windows Tesseract installation
 if os.name == 'nt':
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
