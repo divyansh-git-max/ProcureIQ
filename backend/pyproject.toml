@@ -19,10 +19,11 @@ dependencies = [
   "langchain>=0.2.0",
   "langgraph>=0.2.0",
   "qdrant-client>=1.10.0",
-  "pypdf>=4.3.0",
-  "python-docx>=1.1.2",
+  # Document processing — layout-aware parsing (replaces pymupdf + pytesseract + pypdf)
+  "docling>=2.0.0",
   "pillow>=10.4.0",
-  "pytesseract>=0.3.10",
+  "python-docx>=1.1.2",
+  "huggingface-hub>=1.23.0",
   "groq>=0.9.0",
   "pandas>=2.2.0",
   "numpy>=1.26.0",
@@ -41,6 +42,7 @@ dependencies = [
   "pytest-asyncio>=1.4.0",
   "pymupdf>=1.28.0",
   "huggingface-hub>=1.23.0",
+  "docling>=2.0.0"
 ]
 
 [project.optional-dependencies]
@@ -59,3 +61,15 @@ testpaths = ["tests"]
 pythonpath = ["."]
 asyncio_mode = "auto"
 
+# ── Force CPU-only PyTorch ─────────────────────────────────────────────────────
+# Docling depends on torch. Without this, uv pulls in 1GB+ of NVIDIA CUDA
+# packages (nvidia-cublas, nvidia-cusolver, etc.) that are useless on Render
+# (no GPU) and cause Docker build timeouts.
+# This tells uv to always fetch torch from the CPU-only PyTorch index.
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
