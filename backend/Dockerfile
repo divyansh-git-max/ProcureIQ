@@ -8,16 +8,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
 # Install system-level dependencies
-# - tesseract-ocr: required by pytesseract (OCR Stage 2)
-# - libgl1 libglib2.0-0: required by PyMuPDF
-# - poppler-utils: required for PDF rendering
+# - libgl1 libglib2.0-0: required for image processing (Pillow, EasyOCR)
 # - curl: for health checks
 RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    tesseract-ocr-eng \
     libgl1 \
     libglib2.0-0 \
-    poppler-utils \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -35,7 +30,9 @@ WORKDIR /app
 COPY pyproject.toml uv.lock* ./
 
 # Install all Python dependencies into /app/.venv
-RUN uv sync --frozen --no-dev
+# UV_HTTP_TIMEOUT: Increased from 30s default to handle large packages (torch CPU ~200MB)
+# UV_TORCH_BACKEND: Forces CPU-only torch, skipping 1GB+ of NVIDIA CUDA packages
+RUN UV_HTTP_TIMEOUT=300 UV_TORCH_BACKEND=cpu uv sync --frozen --no-dev
 
 # Download the spaCy model (required by Presidio in input_guard.py)
 RUN uv run python -m spacy download en_core_web_lg

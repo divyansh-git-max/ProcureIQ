@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  frontend-ci:
+    name: Frontend (TypeScript + Build)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: Vite production build
+        run: npm run build
+        env:
+          # Provide a dummy URL so the build doesn't fail on missing env var
+          VITE_API_URL: https://procureiq-backend.onrender.com
+
+  # ── Backend ─────────────────────────────────────────────────────────────────
+  backend-ci:
+    name: Backend (Lint + Tests)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      # Real NeonDB connection — stored in GitHub Secrets
+      DATABASE_URL:           ${{ secrets.DATABASE_URL }}
+      REDIS_URL:              ${{ secrets.REDIS_URL }}
+      CELERY_BROKER_URL:      ${{ secrets.REDIS_URL }}
+      CELERY_RESULT_BACKEND:  ${{ secrets.REDIS_URL }}
+      OPENAI_API_KEY:         ${{ secrets.OPENAI_API_KEY }}
+      GROQ_API_KEY:           ${{ secrets.GROQ_API_KEY }}
+      PINECONE_API_KEY:       ${{ secrets.PINECONE_API_KEY }}
+      PINECONE_INDEX_NAME:    ${{ secrets.PINECONE_INDEX_NAME }}
+      HF_API_KEY:             ${{ secrets.HF_API_KEY }}
+      APP_ENV:                ci
+      API_V1_PREFIX:          /api/v1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Install CPU-only PyTorch first
+        # Prevents uv from pulling in 1GB+ of NVIDIA CUDA packages
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+      - name: Install Python dependencies
+        run: |
+          UV_HTTP_TIMEOUT=300 UV_TORCH_BACKEND=cpu uv sync --frozen --no-dev
+
+      - name: Download spaCy model
+        run: uv run python -m spacy download en_core_web_lg
+
+      - name: Lint with ruff
+        run: uv run ruff check .
+
+      - name: Run pytest (with real NeonDB)
+        run: uv run pytest tests/ -v --tb=short
