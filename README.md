@@ -45,22 +45,6 @@ The core idea is simple: the documents already contain the evidence. ProcureIQ c
 ### Demo Credentials
 Upon running the backend for the first time, default users for all roles are automatically created. You can log into the application using:
 
-- **Admin**
-  - **Email:** `admin@procureiq.demo`
-  - **Password:** `admin123`
-
-- **Auditor**
-  - **Email:** `auditor@procureiq.demo`
-  - **Password:** `auditor123`
-
-- **Gatekeeper**
-  - **Email:** `gatekeeper@procureiq.demo`
-  - **Password:** `gatekeeper123`
-
-- **Strategist**
-  - **Email:** `strategist@procureiq.demo`
-  - **Password:** `strategist123`
-
 The demo includes:
 
 - Command Center: portfolio KPIs, weekly risk, severity mix, and active findings.
