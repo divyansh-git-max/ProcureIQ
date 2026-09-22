@@ -24,8 +24,11 @@ class Settings(BaseSettings):
     groq_api_key: str | None = None
     groq_model: str = "llama-3.3-70b-versatile"
 
+    use_local_slm: bool = True
+    slm_classifier_model: str = "Qwen/Qwen2.5-0.5B-Instruct"
+    slm_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+
     # Comma-separated list of allowed CORS origins for production.
-    # e.g. ALLOWED_ORIGINS=https://procure-iq.vercel.app
     allowed_origins: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")

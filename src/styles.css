@@ -1729,6 +1729,214 @@ a:focus-visible {
   color: #86efac;
 }
 
+/* ─── AgentFlow animated graph ──────────────────────────────────────────── */
+
+.agf-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  padding: 8px 4px 4px;
+  min-height: 280px;
+}
+
+/* specialist row */
+.agf-specialists {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+/* Space for SVG connector lines */
+.agf-gap {
+  width: 100%;
+  height: 80px;
+}
+
+/* supervisor row */
+.agf-supervisor-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Agent card ─────────────────────────────────────────────────────── */
+
+.agf-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(14, 23, 41, 0.82);
+  backdrop-filter: blur(8px);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  text-align: center;
+}
+
+.agf-card--active {
+  border-color: color-mix(in srgb, var(--agent-color) 35%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--agent-color) 15%, transparent),
+    0 4px 16px color-mix(in srgb, var(--agent-color) 18%, transparent),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.agf-card--idle {
+  border-color: rgba(255, 255, 255, 0.04);
+  box-shadow: none;
+}
+
+.agf-card--supervisor {
+  flex-direction: row;
+  gap: 10px;
+  padding: 14px 20px;
+  min-width: 200px;
+  border-radius: 18px;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+.agf-card-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+  filter: drop-shadow(0 0 6px var(--agent-glow, transparent));
+}
+
+.agf-card--supervisor .agf-card-icon {
+  font-size: 1.6rem;
+}
+
+.agf-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.agf-card-name {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.agf-card--supervisor .agf-card-name {
+  font-size: 0.84rem;
+}
+
+.agf-card-tag {
+  font-size: 0.64rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* status dot */
+.agf-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 0.35;
+  position: absolute;
+  top: 9px;
+  right: 9px;
+  transition: background 0.3s, opacity 0.3s;
+}
+
+.agf-status-dot--active {
+  background: #4ade80;
+  opacity: 1;
+  box-shadow: 0 0 6px #4ade80;
+  animation: agf-dot-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes agf-dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.55; transform: scale(0.85); }
+}
+
+/* supervisor ring pulse */
+.agf-supervisor-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 20px;
+  border: 2px solid var(--agent-color, #10b981);
+  pointer-events: none;
+}
+
+/* ── Output section ─────────────────────────────────────────────────── */
+
+.agf-output-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  padding-top: 2px;
+}
+
+.agf-output-arrow {
+  width: 2px;
+  height: 24px;
+  background: linear-gradient(to bottom, rgba(16,185,129,0.6), rgba(16,185,129,0.15));
+  border-radius: 2px;
+}
+
+.agf-verdict {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--verdict-color, #10b981) 30%, transparent);
+  background: color-mix(in srgb, var(--verdict-color, #10b981) 8%, rgba(14,23,41,0.9));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--verdict-color, #10b981) 15%, transparent);
+}
+
+.agf-verdict-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--verdict-color, #10b981);
+  box-shadow: 0 0 6px var(--verdict-color, #10b981);
+  flex-shrink: 0;
+  animation: agf-dot-pulse 1.6s ease-in-out infinite;
+}
+
+.agf-verdict-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--verdict-color, #10b981);
+  letter-spacing: 0.02em;
+}
+
+.agf-verdict-conf {
+  font-size: 0.72rem;
+  color: var(--muted);
+}
+
+/* ── Reduced motion overrides ───────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .agf-status-dot--active,
+  .agf-verdict-dot,
+  .agf-supervisor-ring {
+    animation: none;
+  }
+}
+
+/* ── Legacy agent-flow (kept for compat) ────────────────────────────── */
 .agent-flow {
   display: flex;
   flex-wrap: wrap;
