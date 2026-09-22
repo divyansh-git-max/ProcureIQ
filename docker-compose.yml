@@ -69,7 +69,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: procureiq-worker
-    command: celery -A tasks.worker worker --loglevel=info --concurrency=2
+    # Temporarily bypassing Celery start since tasks/worker.py doesn't have the app configured yet.
+    # Change back to `celery -A tasks.worker worker --loglevel=info` once you write the worker code!
+    command: tail -f /dev/null
     volumes:
       - ./backend:/app
       - procureiq_tmp:/tmp/procureiq
