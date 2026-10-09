@@ -3,13 +3,12 @@ import logging
 import uuid
 import bcrypt
 
-import asyncpg
-
 from pinecone import Pinecone, ServerlessSpec
 from config import settings
 
-from core.seed_data import VENDORS
+from core.seed_data import FINDINGS_LIST, VENDORS
 from db.session import init_db_pool
+from repositories.findings import FINDING_DECISIONS_DDL, FINDINGS_DDL, FindingRepository
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +112,10 @@ async def bootstrap_db() -> None:
                     vendor["pos_at_risk"],
                 )
         
+        await conn.execute(FINDINGS_DDL)
+        await conn.execute(FINDING_DECISIONS_DDL)
+        await _seed_demo_findings(conn)
+
         await conn.execute(_USERS_DDL)
         await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS request_message TEXT")
         if await conn.fetchval("SELECT COUNT(*) FROM users") == 0:
@@ -165,6 +168,18 @@ async def bootstrap_db() -> None:
                 "Strategist",
                 "approved"
             )
+
+async def _seed_demo_findings(conn) -> None:
+    """Copy the demo findings into an empty table, flagged is_demo, where allowed."""
+    if not settings.demo_data_enabled:
+        logger.info("Demo findings not seeded (APP_ENV=%s, SEED_DEMO_DATA off)", settings.app_env)
+        return
+    if await conn.fetchval("SELECT COUNT(*) FROM findings"):
+        return
+    repo = FindingRepository(conn)
+    for finding in FINDINGS_LIST:
+        await repo.insert(finding, is_demo=True)
+
 
 def bootstrap_pinecone():
     """Initialize Pinecone and create the index if it doesn't exist."""

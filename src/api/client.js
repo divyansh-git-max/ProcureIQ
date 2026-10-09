@@ -5,10 +5,16 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // Shared fetch helper — throws a readable error on non-2xx responses
+// Sends the session's access token (set by AppContext on login) when present.
 async function apiFetch(path, options = {}) {
+    const token = sessionStorage.getItem("access_token");
     const res = await fetch(`${BASE_URL}${path}`, {
-        headers: { "Content-Type": "application/json", ...options.headers },
         ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            ...options.headers,
+        },
     });
     if (!res.ok) {
         const err = await res.json().catch(() => ({ detail: res.statusText }));
@@ -66,4 +72,4 @@ export function uploadDocument(file) {
 // Returns: { slos, latencyData, ragasMetrics, trajectoryEval, traces, guardrailLog }
 export function fetchOperations() {
     return apiFetch("/api/v1/operations/health");
-}
+}

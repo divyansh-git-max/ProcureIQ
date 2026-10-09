@@ -1,4 +1,6 @@
+from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -25,10 +27,13 @@ class Finding(BaseModel):
 
 
 class DecisionRequest(BaseModel):
-    status: FindingStatus
+    # A decision is final: "pending" is not a valid target.
+    status: Literal[FindingStatus.APPROVED, FindingStatus.DISMISSED]
+    note: str | None = Field(default=None, max_length=500)
 
 
 class DecisionResponse(BaseModel):
     finding_id: str = Field(serialization_alias="id")
     status: FindingStatus
+    resolved_at: datetime = Field(serialization_alias="resolvedAt")
 

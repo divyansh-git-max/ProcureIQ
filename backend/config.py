@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     slm_classifier_model: str = "Qwen/Qwen2.5-0.5B-Instruct"
     slm_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
 
+    # Seed demo findings outside local/ci (e.g. on the public demo deployment).
+    seed_demo_data: bool = False
+
     # Comma-separated list of allowed CORS origins for production.
     allowed_origins: str = ""
 
@@ -48,6 +51,10 @@ class Settings(BaseSettings):
     @property
     def is_local(self) -> bool:
         return self.app_env == "local"
+
+    @property
+    def demo_data_enabled(self) -> bool:
+        return self.app_env in ("local", "ci") or self.seed_demo_data
 
     @model_validator(mode="after")
     def _require_secret_key(self) -> "Settings":

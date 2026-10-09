@@ -13,23 +13,44 @@ export default function ReviewQueue() {
   const [selected, setSelected] = useState<Finding | null>(null);
   const [statuses, setStatuses] = useState<Record<string, "approved" | "dismissed">>({});
   const [toast, setToast] = useState("");
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetchFindings().then((data) => {
-      setFindings(data);
-      setSelected(data[0]);
-    });
+    fetchFindings()
+      .then((data) => {
+        setFindings(data);
+        setSelected(data[0] ?? null);
+      })
+      .catch((err: Error) => showToast(`Could not load findings: ${err.message}`))
+      .finally(() => setLoaded(true));
   }, []);
 
-  async function decide(id: string, status: "approved" | "dismissed") {
-    if (!roleInfo.canApprove) return;
-    await decideFinding(id, status);
-    setStatuses((prev) => ({ ...prev, [id]: status }));
-    setToast(status === "approved" ? "Approved — action dispatched via n8n webhook" : "Dismissed and logged to audit trail");
+  function showToast(message: string) {
+    setToast(message);
     setTimeout(() => setToast(""), 3000);
   }
 
-  if (!selected) return <div className="loading">Loading review queue…</div>;
+  async function decide(id: string, status: "approved" | "dismissed") {
+    if (!roleInfo.canApprove) return;
+    try {
+      await decideFinding(id, status);
+    } catch (err) {
+      showToast(`Decision not saved: ${(err as Error).message}`);
+      return;
+    }
+    setStatuses((prev) => ({ ...prev, [id]: status }));
+    showToast(status === "approved" ? "Approved and logged to audit trail" : "Dismissed and logged to audit trail");
+  }
+
+  if (!loaded) return <div className="loading">Loading review queue…</div>;
+  if (!selected) {
+    return (
+      <div className="loading">
+        No findings awaiting review.
+        {toast && <div className="toast">{toast}</div>}
+      </div>
+    );
+  }
 
   return (
     <div className="review-layout review-queue-layout">
