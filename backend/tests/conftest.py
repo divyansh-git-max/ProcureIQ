@@ -8,6 +8,7 @@ demo data.
 
 import asyncio
 import os
+import uuid
 from urllib.parse import urlparse
 
 import asyncpg
@@ -72,6 +73,29 @@ def db_client():
 
     with TestClient(app) as test_client:
         yield test_client
+
+
+def db_execute(query: str, *args):
+    """Run one statement on the test database (own connection, outside the app pool)."""
+
+    async def run():
+        conn = await asyncpg.connect(dsn=settings.asyncpg_dsn)
+        try:
+            return await conn.fetch(query, *args)
+        finally:
+            await conn.close()
+
+    return asyncio.run(run())
+
+
+def insert_user(role: str, status: str = "approved") -> str:
+    user_id = f"test-{uuid.uuid4()}"
+    db_execute(
+        "INSERT INTO users (id, name, email, password_hash, role, status)"
+        " VALUES ($1, $2, $3, 'x', $4, $5)",
+        user_id, "Test User", f"{user_id}@test.local", role, status,
+    )
+    return user_id
 
 
 def bearer(role: str, token_type: str = "access", sub: str = "user-1") -> dict[str, str]:

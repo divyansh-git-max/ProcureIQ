@@ -20,6 +20,9 @@ router = APIRouter()
 
 require_admin = require_roles(Role.ADMIN)
 
+# Account statuses that may not log in or refresh tokens.
+BLOCKED_STATUSES = {"pending", "rejected"}
+
 
 @router.post("/signup", response_model=UserResponse)
 async def signup(user: UserCreate):
@@ -95,7 +98,12 @@ async def update_user_status(
 
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_token(claims: CurrentUser = Depends(get_refresh_claims)):
-    return create_token_pair(claims.id, claims.email, claims.role)
+    # Re-read the user so deleted, rejected or re-roled accounts can't keep refreshing.
+    async with get_pool().acquire() as conn:
+        row = await conn.fetchrow("SELECT id, email, role, status FROM users WHERE id = $1", claims.id)
+    if row is None or row["status"] in BLOCKED_STATUSES:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    return create_token_pair(row["id"], row["email"], row["role"])
 
 @router.post("/contact")
 async def user_request(payload: ContactMessageRequest):
