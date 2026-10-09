@@ -39,6 +39,8 @@ class Settings(BaseSettings):
     use_local_slm: bool = True
     slm_classifier_model: str = "Qwen/Qwen2.5-0.5B-Instruct"
     slm_embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # Must match slm_embedding_model's output size; the Pinecone index is checked against it.
+    embedding_dimension: int = 384
 
     # Seed demo findings outside local/ci (e.g. on the public demo deployment).
     seed_demo_data: bool = False

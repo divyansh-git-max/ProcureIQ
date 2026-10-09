@@ -159,33 +159,38 @@ async def _seed_demo_findings(conn) -> None:
         await repo.insert(finding, is_demo=True)
 
 
+class PineconeDimensionMismatch(RuntimeError):
+    """The existing index can't store vectors from the configured embedding model."""
+
+
 def bootstrap_pinecone():
-    """Initialize Pinecone and create the index if it doesn't exist."""
+    """Create the Pinecone index if missing and check its dimension matches the embedder."""
     if not settings.pinecone_api_key:
-        print("Skipping Pinecone setup: PINECONE_API_KEY not set.")
+        logger.info("Skipping Pinecone setup: PINECONE_API_KEY not set.")
         return
-    
-    # Initialize the Pinecone client
-    pc = Pinecone(api_key=settings.pinecone_api_key)
 
     index_name = settings.pinecone_index_name
     if not index_name:
-        print("Skipping Pinecone setup: PINECONE_INDEX_NAME not set.")
+        logger.info("Skipping Pinecone setup: PINECONE_INDEX_NAME not set.")
         return
-    
-    # Check if index exists using the correct synchronous method
+
+    pc = Pinecone(api_key=settings.pinecone_api_key)
+    expected = settings.embedding_dimension
+
     if not pc.has_index(index_name):
-        print(f"Creating Pinecone index: {index_name}...")
-        # Create a Serverless index
+        logger.info("Creating Pinecone index %s (dimension %d)", index_name, expected)
         pc.create_index(
             name=index_name,
-            dimension=1536,
+            dimension=expected,
             metric="cosine",
-            spec=ServerlessSpec(
-                cloud='aws',
-                region='us-east-1'
-            )
+            spec=ServerlessSpec(cloud="aws", region="us-east-1"),
         )
-        print(f"Successfully created Pinecone index: {index_name}")
-    else:
-        print(f"Pinecone index {index_name} already exists.")
+        return
+
+    actual = pc.describe_index(index_name).dimension
+    if actual != expected:
+        raise PineconeDimensionMismatch(
+            f"Pinecone index {index_name!r} has dimension {actual}, but "
+            f"{settings.slm_embedding_model} produces {expected}. Recreate the index."
+        )
+    logger.info("Pinecone index %s ready (dimension %d)", index_name, actual)

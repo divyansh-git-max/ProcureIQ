@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.v1.router import api_router
 from config import Settings, settings
-from db.bootstrap import bootstrap_db, bootstrap_pinecone
+from db.bootstrap import PineconeDimensionMismatch, bootstrap_db, bootstrap_pinecone
 from db.session import close_db_pool
 
 logger = logging.getLogger(__name__)
@@ -18,8 +18,12 @@ async def lifespan(_: FastAPI):
 
     try:
         bootstrap_pinecone()
-    except Exception as e:
-        print(F" Failed to initialize Pinecone: {e}")
+    except PineconeDimensionMismatch:
+        if not settings.is_local:
+            raise
+        logger.exception("Pinecone index dimension mismatch")
+    except Exception:
+        logger.exception("Failed to initialize Pinecone")
 
     yield
     await close_db_pool()
