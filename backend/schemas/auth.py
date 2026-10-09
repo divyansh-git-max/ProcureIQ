@@ -1,6 +1,14 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 from datetime import datetime
+from typing import Literal, Optional
+
+from pydantic import BaseModel, EmailStr
+
+from core.rbac import Role
+
+# Roles a user may request at signup. Admin is never self-assigned.
+SignupRole = Literal[Role.AUDITOR, Role.GATEKEEPER, Role.STRATEGIST]
+UserStatus = Literal["pending", "approved", "rejected", "flagged"]
+
 
 class UserBase(BaseModel):
     name: str
@@ -8,7 +16,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
-    role: str
+    role: SignupRole
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -28,8 +36,8 @@ class TokenResponse(BaseModel):
     user: Optional[UserResponse] = None
 
 class UserStatusUpdate(BaseModel):
-    status: str  # "approved" or "rejected"
-    role: Optional[str] = None
+    status: UserStatus
+    role: Optional[Role] = None
 
 class ContactMessageRequest(BaseModel):
     email: EmailStr

@@ -47,7 +47,6 @@ async def signup(user: UserCreate):
         )
 
         row = await conn.fetchrow("SELECT * FROM users WHERE id = $1", user_id)
-        print(dict(row))
         return dict(row)
 
 @router.post("/login", response_model=TokenResponse)

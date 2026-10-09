@@ -93,11 +93,11 @@ def insert_user(role: str, status: str = "approved") -> str:
     db_execute(
         "INSERT INTO users (id, name, email, password_hash, role, status)"
         " VALUES ($1, $2, $3, 'x', $4, $5)",
-        user_id, "Test User", f"{user_id}@test.local", role, status,
+        user_id, "Test User", f"{user_id}@example.com", role, status,
     )
     return user_id
 
 
 def bearer(role: str, token_type: str = "access", sub: str = "user-1") -> dict[str, str]:
-    token = create_token(sub, f"{role.lower()}@test.local", role, token_type)
+    token = create_token(sub, f"{role.lower()}@example.com", role, token_type)
     return {"Authorization": f"Bearer {token}"}
