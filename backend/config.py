@@ -42,6 +42,8 @@ class Settings(BaseSettings):
 
     # Seed demo findings outside local/ci (e.g. on the public demo deployment).
     seed_demo_data: bool = False
+    # Password for the four demo users outside local/ci; unset means don't seed them.
+    demo_user_password: str | None = None
 
     # Comma-separated list of allowed CORS origins for production.
     allowed_origins: str = ""

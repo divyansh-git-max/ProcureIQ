@@ -118,56 +118,34 @@ async def bootstrap_db() -> None:
 
         await conn.execute(_USERS_DDL)
         await conn.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS request_message TEXT")
-        if await conn.fetchval("SELECT COUNT(*) FROM users") == 0:
-            salt = bcrypt.gensalt()
-            
-            # Create Admin
-            default_admin_pw = bcrypt.hashpw("admin123".encode('utf-8'), salt).decode('utf-8')
-            await conn.execute(
-                _INSERT_USER,
-                str(uuid.uuid4()),
-                "Admin User",
-                "admin@procureiq.demo",
-                default_admin_pw,
-                "admin",
-                "approved"
-            )
+        await _seed_demo_users(conn)
 
-            # Create Auditor
-            default_auditor_pw = bcrypt.hashpw("auditor123".encode('utf-8'), salt).decode('utf-8')
-            await conn.execute(
-                _INSERT_USER,
-                str(uuid.uuid4()),
-                "Auditor User",
-                "auditor@procureiq.demo",
-                default_auditor_pw,
-                "Auditor",
-                "approved"
-            )
 
-            # Create Gatekeeper
-            default_gatekeeper_pw = bcrypt.hashpw("gatekeeper123".encode('utf-8'), salt).decode('utf-8')
-            await conn.execute(
-                _INSERT_USER,
-                str(uuid.uuid4()),
-                "Gatekeeper User",
-                "gatekeeper@procureiq.demo",
-                default_gatekeeper_pw,
-                "Gatekeeper",
-                "approved"
-            )
+# (name, email, role, local/ci password). Passwords are the ones documented in README.md.
+_DEMO_USERS = [
+    ("Admin User", "admin@procureiq.demo", "admin", "admin123"),
+    ("Auditor User", "auditor@procureiq.demo", "Auditor", "auditor123"),
+    ("Gatekeeper User", "gatekeeper@procureiq.demo", "Gatekeeper", "gatekeeper123"),
+    ("Strategist User", "strategist@procureiq.demo", "Strategist", "strategist123"),
+]
 
-            # Create Strategist
-            default_strategist_pw = bcrypt.hashpw("strategist123".encode('utf-8'), salt).decode('utf-8')
-            await conn.execute(
-                _INSERT_USER,
-                str(uuid.uuid4()),
-                "Strategist User",
-                "strategist@procureiq.demo",
-                default_strategist_pw,
-                "Strategist",
-                "approved"
-            )
+
+async def _seed_demo_users(conn) -> None:
+    """Seed one approved user per role into an empty users table.
+
+    local/ci use the README passwords. Elsewhere users are seeded only when
+    DEMO_USER_PASSWORD is set, and all four share that password.
+    """
+    if await conn.fetchval("SELECT COUNT(*) FROM users"):
+        return
+    if settings.app_env not in ("local", "ci") and not settings.demo_user_password:
+        logger.info("Demo users not seeded (APP_ENV=%s, DEMO_USER_PASSWORD unset)", settings.app_env)
+        return
+    for name, email, role, default_password in _DEMO_USERS:
+        password = settings.demo_user_password or default_password
+        password_hash = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        await conn.execute(_INSERT_USER, str(uuid.uuid4()), name, email, password_hash, role, "approved")
+
 
 async def _seed_demo_findings(conn) -> None:
     """Copy the demo findings into an empty table, flagged is_demo, where allowed."""
