@@ -1,12 +1,24 @@
+import logging
+import secrets
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+logger = logging.getLogger(__name__)
+
+MIN_SECRET_KEY_LENGTH = 32
 
 
 class Settings(BaseSettings):
     app_name: str = "ProcureIQ API"
     app_env: str = "local"
     api_v1_prefix: str = "/api/v1"
+
+    # JWT signing key. Required outside local; local gets a random per-process key.
+    secret_key: str | None = None
+    access_token_minutes: int = 30
+    refresh_token_days: int = 7
 
     database_url: str = "postgresql://procureiq:procureiq@localhost:5432/procureiq"
     redis_url: str = "redis://localhost:6379/0"
@@ -32,6 +44,27 @@ class Settings(BaseSettings):
     allowed_origins: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    @property
+    def is_local(self) -> bool:
+        return self.app_env == "local"
+
+    @model_validator(mode="after")
+    def _require_secret_key(self) -> "Settings":
+        if self.secret_key:
+            if not self.is_local and len(self.secret_key) < MIN_SECRET_KEY_LENGTH:
+                raise ValueError(
+                    f"SECRET_KEY must be at least {MIN_SECRET_KEY_LENGTH} characters "
+                    f"when APP_ENV={self.app_env!r}."
+                )
+            return self
+        if not self.is_local:
+            raise ValueError(f"SECRET_KEY must be set when APP_ENV={self.app_env!r}.")
+        logger.warning(
+            "SECRET_KEY not set; using a random per-process key. Tokens are invalidated on restart."
+        )
+        self.secret_key = secrets.token_urlsafe(48)
+        return self
 
     @property
     def asyncpg_dsn(self) -> str:
