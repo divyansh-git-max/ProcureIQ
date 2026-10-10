@@ -1,8 +1,6 @@
-import re
 import json
 import difflib
 import logging
-import importlib
 
 from config import settings
 from schemas.output_schema import DocIntelResult

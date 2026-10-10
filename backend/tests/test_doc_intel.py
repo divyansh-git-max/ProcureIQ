@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from ingestion.doc_intel import classify_by_keywords, classify_document
 
 # ── Stage 1: Keyword Tests (no DB, no LLM, fully deterministic) ─────────────
@@ -46,6 +46,7 @@ async def test_classify_document_by_keyword_no_llm_call():
     assert result.confidence == 1.0
     assert result.classification_method == "heuristic"
 
+@pytest.mark.integration  # calls the real Groq API
 @pytest.mark.asyncio
 async def test_classify_document_triggers_llm():
     """

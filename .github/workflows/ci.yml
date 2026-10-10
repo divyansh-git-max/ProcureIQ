@@ -43,19 +43,26 @@ jobs:
       run:
         working-directory: backend
 
+    # Disposable database: tests never touch the Neon demo DB.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: procureiq_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     env:
-      # Real NeonDB connection — stored in GitHub Secrets
-      DATABASE_URL:           ${{ secrets.DATABASE_URL }}
-      REDIS_URL:              ${{ secrets.REDIS_URL }}
-      CELERY_BROKER_URL:      ${{ secrets.REDIS_URL }}
-      CELERY_RESULT_BACKEND:  ${{ secrets.REDIS_URL }}
-      OPENAI_API_KEY:         ${{ secrets.OPENAI_API_KEY }}
-      GROQ_API_KEY:           ${{ secrets.GROQ_API_KEY }}
-      PINECONE_API_KEY:       ${{ secrets.PINECONE_API_KEY }}
-      PINECONE_INDEX_NAME:    ${{ secrets.PINECONE_INDEX_NAME }}
-      HF_API_KEY:             ${{ secrets.HF_API_KEY }}
-      APP_ENV:                ci
-      API_V1_PREFIX:          /api/v1
+      DATABASE_URL:  postgresql://postgres:postgres@localhost:5432/procureiq_test
+      APP_ENV:       ci
+      API_V1_PREFIX: /api/v1
 
     steps:
       - name: Checkout code
@@ -83,8 +90,17 @@ jobs:
       - name: Download spaCy model
         run: uv run python -m spacy download en_core_web_lg
 
+      - name: Generate a per-run JWT secret
+        run: echo "SECRET_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+
       - name: Lint with ruff
         run: uv run ruff check .
 
-      - name: Run pytest (with real NeonDB)
-        run: uv run pytest tests/ -v --tb=short
+      - name: Run pytest (Postgres service container)
+        run: uv run pytest tests/ -v --tb=short -m "not integration"
+
+      - name: Run integration tests (real Groq API)
+        env:
+          GROQ_API_KEY:   ${{ secrets.GROQ_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: uv run pytest tests/ -v --tb=short -m integration

@@ -20,6 +20,9 @@ from core.security import create_token
 
 PROTECTED_DB_HOST_MARKERS = ("neon.tech",)
 
+# Tests never talk to the real Pinecone index; bootstrap_pinecone is unit-tested with a mock.
+settings.pinecone_api_key = None
+
 _db_status: tuple[bool, str] | None = None
 
 
