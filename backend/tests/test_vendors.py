@@ -1,9 +1,11 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from main import app
 
 
-def test_list_vendors_returns_seed_data_without_database() -> None:
+@pytest.mark.db  # runs the app lifespan, which connects to DATABASE_URL
+def test_list_vendors_returns_seeded_vendors() -> None:
     with TestClient(app) as client:
         response = client.get("/api/v1/vendors")
 

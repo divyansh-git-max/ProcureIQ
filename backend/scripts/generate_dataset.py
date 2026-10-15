@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 # The anomalies to generate:

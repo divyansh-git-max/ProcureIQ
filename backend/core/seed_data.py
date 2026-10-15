@@ -12,7 +12,7 @@ How this file works:
     each endpoint file — you don't need to touch this file at all.
 
 Sections:
-  1. FINDINGS       → ReviewQueue.tsx, CommandCenter.tsx
+  1. FINDINGS       → copied into the findings table (is_demo) by db/bootstrap.py
   2. VENDORS        → VendorIntelligence.tsx
   3. DASHBOARD      → CommandCenter.tsx (KPIs, weekly risk chart, severity mix)
   4. DOCUMENTS      → DocumentControl.tsx
@@ -33,8 +33,6 @@ Architecture source:
 
 from __future__ import annotations
 
-import copy
-from datetime import datetime, timezone
 
 # ---------------------------------------------------------------------------
 # 1. FINDINGS
@@ -130,29 +128,6 @@ FINDINGS_LIST: list[dict] = [
         "resolved_at": None,
     },
 ]
-
-# Mutable in-memory store: keyed by finding ID.
-# POST /findings/{id}/decide mutates status here at runtime.
-# Deep copy so mutations don't affect FINDINGS_LIST (the original template).
-FINDINGS_STORE: dict[str, dict] = {f["id"]: copy.deepcopy(f) for f in FINDINGS_LIST}
-
-
-def get_findings(status: str | None = None) -> list[dict]:
-    """Return findings from the store, optionally filtered by status."""
-    findings = list(FINDINGS_STORE.values())
-    if status:
-        findings = [f for f in findings if f["status"] == status]
-    return sorted(findings, key=lambda f: f["created_at"], reverse=True)
-
-
-def decide_finding(finding_id: str, status: str) -> dict | None:
-    """Update a finding's status. Returns the updated finding or None if not found."""
-    if finding_id not in FINDINGS_STORE:
-        return None
-    FINDINGS_STORE[finding_id]["status"] = status
-    FINDINGS_STORE[finding_id]["resolved_at"] = datetime.now(timezone.utc).isoformat()
-    return FINDINGS_STORE[finding_id]
-
 
 # ---------------------------------------------------------------------------
 # 2. VENDORS

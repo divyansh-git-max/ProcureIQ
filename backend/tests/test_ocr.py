@@ -18,7 +18,7 @@ backend_dir = str(Path(__file__).resolve().parent.parent)
 if backend_dir not in sys.path:
     sys.path.insert(0, backend_dir)
 
-from ingestion.ocr import (
+from ingestion.ocr import (  # noqa: E402 - needs the sys.path insert above
     extract_text_docling,
     extract_text_openai,
     extract_document_text,
@@ -26,7 +26,7 @@ from ingestion.ocr import (
 )
 
 
-async def test_ocr_pipeline(file_path: str):
+async def run_ocr_pipeline(file_path: str):
     print(f"\n📄 File: {file_path}")
     print(f"   Type: {'Image' if _is_image(file_path) else 'PDF'}")
     print("=" * 60)
@@ -71,7 +71,7 @@ if __name__ == "__main__":
         TEST_FILE = "data/documents/Apex_Invoice_0194.pdf"
 
     if Path(TEST_FILE).exists():
-        asyncio.run(test_ocr_pipeline(TEST_FILE))
+        asyncio.run(run_ocr_pipeline(TEST_FILE))
     else:
         print(f"❌ File not found: '{TEST_FILE}'")
         print("\nAvailable test files:")

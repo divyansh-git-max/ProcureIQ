@@ -1,4 +1,3 @@
-import pytest
 from guardrails.input_guard import (
     check_file_type,
     check_file_size,

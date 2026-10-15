@@ -27,9 +27,11 @@ async def main():
             tokens = text[:500].split()
             import difflib
             for token in tokens:
-                if len(token) < 4: continue
+                if len(token) < 4:
+                    continue
                 matches = difflib.get_close_matches(token, [v.name], n=1, cutoff=0.8)
                 if matches:
                     print("  -> fuzzy match on token:", token)
 
-asyncio.run(main())
+if __name__ == "__main__":  # manual debug script; must not run on pytest import
+    asyncio.run(main())
