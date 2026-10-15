@@ -68,7 +68,7 @@ CI (`.github/workflows/ci.yml`) runs the frontend type check and build, then `ru
 
 ## Open decisions (not yet made — ask the user before depending on them)
 
-- **LLM provider:** Groq `llama-3.3-70b-versatile` (the current `doc_intel` default) or OpenAI.
+- **LLM provider:** Groq (`doc_intel` default `qwen/qwen3.8-27b`, set by `GROQ_MODEL`; Groq retired `llama-3.3-70b-versatile` in Oct 2026) or OpenAI. Groq reasoning models such as `openai/gpt-oss-*` return empty output under `doc_intel`'s `max_tokens=120`.
 - ~~Embedding model~~ **Decided:** local MiniLM, 384 dimensions (`EMBEDDING_DIMENSION`). The existing Pinecone index `rag` is 1024-dimensional and must be recreated; startup outside local fails until it is.
 - **Deployment target:** Render or Railway. The README says Render, but `backend/railway.toml` and `backend/Procfile` exist too. Keep the config for one target and delete the other.
 

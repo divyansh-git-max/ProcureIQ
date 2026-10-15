@@ -34,7 +34,7 @@ class Settings(BaseSettings):
     web_search_api_key: str | None = None
     
     groq_api_key: str | None = None
-    groq_model: str = "llama-3.3-70b-versatile"
+    groq_model: str = "qwen/qwen3.8-27b"
 
     use_local_slm: bool = True
     slm_classifier_model: str = "Qwen/Qwen2.5-0.5B-Instruct"
