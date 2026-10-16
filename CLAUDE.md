@@ -2,108 +2,136 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Start of every session
+
+1. Read `PROGRESS.md` first. It holds what was built, what was learned, open bugs and the next task.
+2. At the end of the session, update `PROGRESS.md`.
+3. `docs/GAP_REPORT.md` is the audit of real vs mocked; keep it current when something becomes real.
+
+## Working agreement (overrides default behaviour)
+
+Divyansh is an IIT Madras BS Data Science student targeting FDE / applied AI engineer roles. ProcureIQ is his flagship project, and he has two equal goals: make it production-grade, and be able to write, explain and debug every line without AI. He will be interviewed on it.
+
+**Claude is a senior engineer and mentor, not the author.**
+
+- **Don't write implementation code by default; he writes it.** Instead:
+  - Break work into tasks of 1–3 hours.
+  - Explain concepts and trade-offs, and point to docs or source code.
+  - Give hints in increasing levels: concept → approach → pseudocode. Show real code only when he says **"show me the code"**.
+- Write tests or acceptance criteria first when useful, so he implements until they pass.
+- Review his code as a strict senior reviewer: correctness, edge cases, security, performance, readability, typing, tests. Point out the issues; he fixes them.
+- When he's stuck debugging, ask first (what does the stack trace say? what's your hypothesis?), then narrow it down. Don't hand over the fix.
+- **"scaffold: <thing>"** is the exception. Write the boilerplate (Dockerfile, CI YAML, config, migration skeleton, type stubs), then walk through it line by line.
+- After each task, ask 2–3 short questions about what he built. If he can't answer, revisit before moving on.
+- Tag each task with the skill it trains: Python depth (async, typing, testing, modules) · FastAPI + SQL · TypeScript/React (he builds the frontend for each backend feature) · PyTorch (M9) · system design (queues, idempotency, retries, circuit breakers, rate limiting, caching).
+
+**Rules of engagement**
+
+- Smallest useful step first; never a large multi-file change at once.
+- Before each task, state the goal, the acceptance criteria and the files involved.
+- **Never commit, push or deploy without asking. Never touch secrets or `.env` values.**
+- If a request is a bad idea, say so directly and explain why.
+- Keep explanations concise; he'll ask for depth.
+- No fake metrics or mocked responses presented as real. A stub must look like a stub, in code, API output and replies.
+- Keep API response shapes compatible with the frontend (`src/api/client.js`, `src/api/client.d.ts`, `src/types.ts`), or change both sides together.
+- Python dependencies come only from `uv`/`pyproject.toml`; `backend/requirements.txt` is stale.
+
 ## Project
 
-ProcureIQ: AI procurement intelligence for construction teams (Kaya AI hackathon, Track 3). A React/Vite frontend at the repo root plus a FastAPI backend in `backend/`. It ingests POs, invoices, GRNs, contracts, and vendor records, flags anomalies, and routes the findings to a human Auditor for approval.
+ProcureIQ is AI procurement intelligence for construction teams. It ingests contracts, POs, invoices, GRNs and vendor records, detects anomalies (invoice–PO mismatch, duplicate invoices, GRN quantity shortfalls, unenforced late-delivery penalties, vendor risk), and surfaces grounded findings with citations. An Auditor approves or dismisses every finding (human in the loop).
+
+**Stack as it actually is:**
+- **Frontend:** React, TypeScript and Vite at the repo root (Vercel).
+- **Backend:** FastAPI, Pydantic and Python 3.12 in `backend/`.
+- **Database:** Postgres on Neon, through **raw asyncpg**. SQLAlchemy and Alembic are installed but unused.
+- **Auth:** JWT RBAC with 4 roles.
+- **Deployment target:** undecided. The README names both Render and Railway, and both `railway.toml` and a `Procfile` exist.
+
+The milestone list and its proposed adjustments are in `docs/GAP_REPORT.md`, which is awaiting approval.
 
 ## Commands
 
-### Frontend (repo root)
+Frontend (repo root):
 ```bash
 npm install
-npm run dev          # Vite dev server; expects backend at http://localhost:8000 (override with VITE_API_URL in root .env)
-npm run build        # tsc -b && vite build
-npm run lint         # eslint
-npx tsc --noEmit     # type check (what CI runs)
+npm run dev          # expects backend at http://localhost:8000 (VITE_API_URL overrides)
+npm run build        # tsc -b && vite build — also the type check
+npm run lint
 ```
 
-### Backend (run from `backend/`; imports are rooted there, e.g. `from config import settings`)
+Backend (run from `backend/`; imports are rooted there, e.g. `from config import settings`):
 ```bash
-uv sync                                   # install deps (pyproject forces CPU-only torch)
-uv run run.py                             # uvicorn main:app on $PORT (default 8000) with reload
-uv run ruff check .                       # lint (line-length 100)
-uv run pytest tests/ -v                   # all tests
-uv run pytest tests/test_health.py::test_health_check -v   # single test
-uv run pytest -m "not integration"        # skip tests that call real external APIs (Groq)
-uv run python -m spacy download en_core_web_lg            # required by guardrails PII check
+uv sync
+uv run run.py                                   # uvicorn main:app, reload, $PORT (default 8000)
+uv run ruff check .                             # line-length 100
+uv run pytest -m "not integration"              # unit + db tests
+uv run pytest tests/test_findings.py::test_second_decision_conflicts -v   # single test
+uv run pytest -m integration                    # real Groq API calls
+uv run python -m spacy download en_core_web_lg  # needed by guardrails PII check
 ```
-`docker-compose up --build` from the repo root starts Redis, the API on :8000 (hot reload), and a Celery worker. The worker command is currently `tail -f /dev/null` because `tasks/worker.py` is a stub. Postgres (NeonDB) and Pinecone are external. They are configured through `backend/.env`.
 
-CI (`.github/workflows/ci.yml`) runs the frontend type check and build, then `ruff check .`, `pytest -m "not integration"` against a `postgres:16` service container, and finally the Groq tests (`-m integration`) in a separate step.
+CI (`.github/workflows/ci.yml`):
+- **Frontend job:** Node 24, `npm ci`, type check, build.
+- **Backend job:** ruff, then `pytest -m "not integration"` against a `postgres:16` service container, then the Groq tests in a separate step.
+- **Lock file:** CI's newer npm rejects lock files written by older npm versions. If `npm ci` fails with "Missing: … from lock file", regenerate the lock with the CI's npm version.
 
-**Test DB rules** (`backend/tests/conftest.py`): tests that need Postgres are marked `@pytest.mark.db` and use the `db_client` fixture, which runs the app lifespan and so `bootstrap_db`. They are refused against any `neon.tech` host (the demo DB), skipped locally when no test DB is reachable, and fail in CI (`CI=true`). To run them locally, point `DATABASE_URL` at a throwaway Postgres and set `APP_ENV=ci`. Pinecone is disabled for the whole test session. Test modules must not do work at import time; `asyncio.run` at module level poisons the global asyncpg pool.
+**Test DB rules** (`backend/tests/conftest.py`):
+- Postgres-backed tests are marked `@pytest.mark.db` and use the `db_client` fixture, which runs the app lifespan and so `bootstrap_db`.
+- They are refused against any `neon.tech` host (the demo DB), skipped locally when no test DB is reachable, and fail in CI (`CI=true`).
+- To run them locally, point `DATABASE_URL` at a throwaway Postgres and set `APP_ENV=ci`.
+- Pinecone is disabled for the whole test session.
+- Test modules must not do work at import time: a module-level `asyncio.run` poisons the global asyncpg pool.
 
 ## Architecture
 
-**Backend layout.** The READMEs describe a `backend/app/` package that does not exist. Modules sit directly under `backend/`:
-- `main.py`: app factory. Its lifespan calls `db/bootstrap.py` (`bootstrap_db` creates the tables with raw DDL and seeds the vendors plus a demo user for each role; `bootstrap_pinecone` creates the index or checks its dimension). CORS is `*` only when `APP_ENV=local`; elsewhere it uses `ALLOWED_ORIGINS`.
-- `config.py`: pydantic-settings `Settings`, loaded from `backend/.env`. `asyncpg_dsn` strips a `+driver` suffix from `DATABASE_URL`. `SECRET_KEY` is required when `APP_ENV` is not `local`. Demo data is seeded only in local/ci, or with `SEED_DEMO_DATA` (findings) / `DEMO_USER_PASSWORD` (users).
-- `core/security.py`: all JWT logic. Tokens carry `type` (`access`/`refresh`). Protect routes with `Depends(require_roles(Role.X))` (401 for a bad token, 403 for the wrong role) or `Depends(get_current_user)`. Never decode JWTs in endpoint modules.
-- `db/session.py`: a global **asyncpg pool**, accessed through `get_pool()` / `get_db_session()`. SQL is raw asyncpg, not the SQLAlchemy ORM, even though SQLAlchemy and Alembic are listed as dependencies.
-- `api/v1/router.py` mounts `endpoints/{auth,dashboard,findings,vendors,documents,operations}` under `/api/v1`.
-- `schemas/`: Pydantic contracts that mirror the frontend data shapes (`src/types.ts`, `src/mockData.ts`). Findings use field aliases, so routes pass `response_model_by_alias=True`. `schemas/output_schema.py` holds the pipeline result types (`GuardResult`, `DocIntelResult`).
+**Backend layout.** Modules sit directly under `backend/`. The READMEs describe a `backend/app/` package that doesn't exist.
+- `main.py`: `create_app(settings)` app factory.
+  - The lifespan runs `db/bootstrap.py`: `bootstrap_db` creates the tables with raw DDL and seeds demo data; `bootstrap_pinecone` creates the index or checks that its dimension matches `EMBEDDING_DIMENSION`.
+  - CORS is `*` only when `APP_ENV=local`; elsewhere it comes from `ALLOWED_ORIGINS`.
+- `config.py`: pydantic-settings, loaded from `backend/.env`.
+  - `SECRET_KEY` is required when `APP_ENV` isn't `local`.
+  - Demo data is seeded only in local/ci, or with `SEED_DEMO_DATA` (findings) / `DEMO_USER_PASSWORD` (users).
+  - `GROQ_MODEL` defaults to `qwen/qwen3.8-27b`; Groq retired Llama 3.3.
+- `core/security.py`: all JWT logic.
+  - Tokens carry `type` (`access`/`refresh`).
+  - Protect routes with `Depends(require_roles(Role.X))` (401 for a bad token, 403 for the wrong role) or `Depends(get_current_user)`.
+  - Never decode JWTs in endpoint modules.
+- `core/rbac.py`: `Role.ADMIN` is lowercase `"admin"` to match DB rows and the frontend. Signup may only request Auditor, Gatekeeper or Strategist.
+- `db/session.py`: a global asyncpg pool (`get_pool()`).
+- `repositories/`: the SQL boundary. `findings.py` has `decide()` (row lock, 409 on a second decision, audit row in `finding_decisions`).
+- `schemas/`: Pydantic contracts mirroring frontend shapes. Findings use aliases, so routes pass `response_model_by_alias=True`.
 
-**What is real and what is a stub.** Changes need to account for this split:
-- Real: `auth` (JWT with bcrypt and refresh tokens, plus admin user management backed by the `users` table), `findings` (Postgres via `repositories/findings.py`; decide is Auditor-only, row-locked, and audited in `finding_decisions`), `vendors` (Postgres via `repositories/vendors.py`), `guardrails/input_guard.py` (file type/size checks, prompt injection, and PII via spaCy), `ingestion/ocr.py` (Docling first, then an OpenAI Vision fallback; returns `(text, method)`), and `ingestion/doc_intel.py` (keyword classification, then Groq LLM classification, plus fuzzy vendor matching against the DB).
-- Stubbed or in-memory: `dashboard` reads `core/seed_data.py`. The `FINDINGS_LIST` in that module is only demo seed data copied into the DB with `is_demo=true`. `documents`/`ingest` returns canned data and does not yet call the guardrail → OCR → doc_intel chain. `agents/*` are placeholder nodes that only append to `agent_path`. `services/agent_orchestrator.py` is a linear stand-in for the planned LangGraph graph (supervisor → retrieval → optional websearch → analysis → report). `tasks/worker.py`, `retrieval/`, `memory/`, `mcp/`, `evaluation/`, `forecasting/`, and most of `services/` and `repositories/` are empty or skeletal.
-- Planned pipeline (see `docs/ARCHITECTURE.md`): upload → guardrails → OCR/doc intel → chunk and index into Pinecone namespaces (`contracts`, `purchase_orders`, `invoices`, `goods_receipts`, `vendors`) → agent graph → grounded finding → Auditor approval.
+**Real vs stub** (details in `docs/GAP_REPORT.md`):
+- **Real:**
+  - auth and user admin
+  - findings and Auditor decisions (Postgres)
+  - vendors (Postgres, with a silent seed fallback)
+  - guardrails (`guardrails/input_guard.py`)
+  - OCR (`ingestion/ocr.py`: Docling, then OpenAI Vision)
+  - document classification (`ingestion/doc_intel.py`: keywords, then Groq)
+- **Stub:**
+  - dashboard (`core/seed_data.py`)
+  - `/documents` and `/ingest` (canned responses; nothing is stored)
+  - `/operations/health` (empty lists)
+  - `agents/*` (each only appends to `agent_path`)
+  - `services/agent_orchestrator.py` (linear, not LangGraph)
+  - `tasks/worker.py`, plus most of `services/`, `retrieval/`, `memory/`, `mcp/`, `evaluation/` and `forecasting/`
+- **Data:** the synthetic POs, invoices, GRNs and contracts are JSON in `backend/data/`, not in Postgres. `core/dataset_schema.py` has models for them that nothing uses yet.
 
-**Frontend.** `src/App.tsx` switches between workspace components (`CommandCenter`, `ReviewQueue`, `VendorIntelligence`, `DocumentControl`, `Operations`, plus `AdminSidebar` for admins) based on the logged-in role. `src/context/AppContext.tsx` owns auth state, the login/refresh/signup flow (`fetchWithAuth` retries after a token refresh), and admin user management, all through `/api/v1/auth/*`. `src/api/client.js` (with hand-written `client.d.ts` types) wraps the data endpoints. `src/mockData.ts` supplies role and workspace definitions and demo fallback data.
+**Frontend:**
+- `src/App.tsx` switches workspaces by role.
+- `src/context/AppContext.tsx` owns auth (`fetchWithAuth` refreshes on 401/403).
+- `src/api/client.js` wraps the data endpoints and sends the Bearer token.
+- `ROLES`/`workspaces` in `src/mockData.ts` are UI config. The vendor fallback in `VendorIntelligence.tsx` is mock data.
 
-**Roles.** Admin, Auditor (approves/dismisses findings), Gatekeeper (ingestion), Strategist (portfolio/vendor risk). `Role` in `backend/core/rbac.py`; `Role.ADMIN` is the lowercase `"admin"` to match DB rows and the frontend. Signup can only request Auditor/Gatekeeper/Strategist. Demo logins, e.g. `auditor@procureiq.demo` / `auditor123`, are seeded on first boot and listed in `README.md`.
+## Decisions log
 
-**Data.** Synthetic seed JSON and generated PDFs live in `backend/data/`, produced by `backend/scripts/generate_dataset.py` and `generate_pdfs.py`. API route contracts are documented in `docs/API_CONTRACT.md`.
-
-## Working rules
-
-- **One milestone at a time.** For each milestone below: write a plan, wait for the user's approval, then implement it with tests. Commit after each step.
-- **Before every commit**, run the checks CI runs: `uv run ruff check .` and `uv run pytest` from `backend/`, and `npm run build` from the repo root (it also type-checks).
-- **No fake metrics or mocked responses presented as real.** If something is not done, say so in code, API output and replies. A stub must look like a stub.
-- **Keep API response shapes compatible with the frontend** (`src/api/client.js`, `src/api/client.d.ts`, `src/types.ts`). If a shape has to change, update the frontend in the same change.
-- **Config comes from env** via `config.py` `Settings`. Never commit secrets. Don't leave dead settings: implement them or delete them.
-- **After each milestone, add 2-3 lines to `DECISIONS.md`** (create it at the repo root on first use): what was chosen and the trade-off.
-- **Use `uv`/`pyproject.toml` as the only source of Python dependencies.** The Dockerfile already uses `uv sync --frozen`. `requirements.txt` is stale (it is missing `groq`, for example); delete it or generate it from the lockfile, and don't edit it by hand.
-- **When an endpoint becomes real**, remove the `mockData.ts` fallback in the components that use it (`App.tsx`, `Sidebar.tsx`, `AppContext.tsx`, `VendorIntelligence.tsx`), or show a visible "demo data" badge whenever the fallback is used. `ROLES`/`workspaces` in `mockData.ts` are UI config, not fake data.
-- **Leave the web search agent as a stub** until M4 works. It is the lowest priority.
-
-## Open decisions (not yet made — ask the user before depending on them)
-
-- **LLM provider:** Groq (`doc_intel` default `qwen/qwen3.8-27b`, set by `GROQ_MODEL`; Groq retired `llama-3.3-70b-versatile` in Oct 2026) or OpenAI. Groq reasoning models such as `openai/gpt-oss-*` return empty output under `doc_intel`'s `max_tokens=120`.
-- ~~Embedding model~~ **Decided:** local MiniLM, 384 dimensions (`EMBEDDING_DIMENSION`). The existing Pinecone index `rag` is 1024-dimensional and must be recreated; startup outside local fails until it is.
-- **Deployment target:** Render or Railway. The README says Render, but `backend/railway.toml` and `backend/Procfile` exist too. Keep the config for one target and delete the other.
-
-## Roadmap
-
-**M0 Security fixes — DONE** (branch `m0-security`; write-up in `docs/M0_SECURITY.md`). Original scope, kept for reference:
-- Add a required `secret_key` to `Settings`; startup fails if it is missing when `app_env != local`. `auth.py` currently falls back to the literal `"secret_key"`.
-- `get_current_admin_user` checks `email is None and role != "admin"`. Change it to require `role == "admin"`.
-- Add `ADMIN` to the `Role` enum. Enforce the Auditor role server-side on `POST /findings/{id}/decide`.
-- Add a `type` claim (`access`/`refresh`) to tokens. `/auth/refresh` must accept only refresh tokens, and protected routes must accept only access tokens.
-- Make the Pinecone index dimension match the chosen embedding model.
-- Signup: restrict `role` in `schemas/auth.py` to the `Role` enum and never accept admin.
-- CORS: use `settings.allowed_origins` outside local instead of `"*"`.
-- `bootstrap.py` seeds demo users with hardcoded passwords. Keep that for local only; in production, skip seeding or read the passwords from env.
-- CI: run pytest against a separate test DB or Neon branch, or a Postgres service container, never the demo DB.
-
-**M1 Evaluation harness** (before any agent work):
-- Extend `scripts/generate_dataset.py` to about 50 labelled cases: duplicate invoice, price mismatch vs PO, quantity shortfall vs GRN, missed late-delivery penalty, and clean cases with no anomaly. Write the ground truth to JSON.
-- Add an eval script that reports precision and recall per anomaly type, plus false positives on clean cases. Add a CI step for it.
-
-**M2 Ingestion end to end:**
-- `POST /ingest` saves the file, inserts a `documents` row with status `queued`, and enqueues a Celery task.
-- The worker runs guard → OCR → classify → extract structured fields (one Pydantic schema per doc type: invoice, PO, GRN, contract) → persist → chunk → embed → upsert to Pinecone, one namespace per doc type. It updates the status at each stage.
-- `GET /documents` returns the real rows and their pipeline status.
-- Consolidate the empty `backend/worker/` package into `tasks/`. Replace `tail -f /dev/null` in `docker-compose.yml` with a real Celery worker command.
-- `use_local_slm` and `slm_classifier_model` in config are dead because `core/slm.py` is empty. Implement them or remove them.
-
-**M3 Deterministic checks** (plain Python/SQL, no LLM): three-way match (invoice vs PO vs GRN), duplicate detection, and a penalty check against contract clauses. Each check emits a candidate finding with evidence (document ids and fields).
-
-**M4 LangGraph agents:**
-- Replace the linear orchestrator with a LangGraph `StateGraph` over the existing `AgentState`. The Supervisor routes by intent; Retrieval queries Pinecone namespaces; Analysis uses the LLM only to interpret clauses and explain candidate findings; Report emits findings with citations and drops any claim without a cited source.
-- Write agent findings through `FindingRepository.insert` (the findings endpoints already read from the DB since M0). Move the dashboard KPIs off `core/seed_data.py`.
-
-**M5 Observability:** log per-node latency, tokens and `agent_path` for each run. Serve them from `/operations/health` (it currently returns empty lists) together with the latest eval metrics.
+Record each decision and its trade-off in `DECISIONS.md` at the end of each milestone. Still open:
+- **Deployment target:** Render or Railway.
+- **LLM provider:** Groq or OpenAI.
+- **Migrations:** Alembic with raw SQL, or adopt the ORM.
+- **Multi-tenancy:** whether to add it, and when.
 
 ## graphify
 
-`AGENTS.md` asks you to use the graph in `graphify-out/`. That directory exists locally but is not tracked by git (the `graphify-out/` ignore rule overrides the later `!` exceptions), and it may be stale. If you want the graphify rules to apply, run `graphify update .` first. Otherwise, ignore them and use normal search.
+`graphify-out/` exists locally but isn't tracked by git and may be stale. Run `graphify update .` before relying on `graphify query`; otherwise use normal search.
