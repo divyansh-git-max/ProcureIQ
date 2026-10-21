@@ -89,3 +89,6 @@ graphify-out/*
 
 
 CLAUDE.md
+
+# Regenerable raw documents behind the forecasting dataset
+backend/data/forecast/history/
