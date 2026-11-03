@@ -35,8 +35,8 @@ The core idea is simple: the documents already contain the evidence. ProcureIQ c
 | | URL |
 |---|---|
 | **Frontend** | https://procure-iq-liard.vercel.app |
-| **Backend API** | https://procureiq-production-c4e4.up.railway.app |
-| **API Docs** | https://procureiq-production-c4e4.up.railway.app/docs |
+| **Backend API** | https://procureiq-backend.onrender.com (Render free tier: the first request after ~15 min idle is slow) |
+| **API Docs** | https://procureiq-backend.onrender.com/docs |
 
 > **Status:** Live MVP — core authentication, vendor intelligence, and dashboard are fully wired to the backend. The full agentic document pipeline (OCR → LangGraph → RAG) is in active development.
 
